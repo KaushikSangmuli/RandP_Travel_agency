@@ -1,0 +1,97 @@
+.root {
+    -fx-font-family: "Segoe UI";
+}
+
+/* Inputs */
+.text-field,
+.password-field {
+    -fx-pref-width: 280;
+    -fx-padding: 14;
+
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+
+    -fx-background-color: rgba(255,255,255,0.14);
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-width: 1;
+
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: rgba(255,255,255,0.55);
+
+    -fx-font-size: 13px;
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(255,255,255,0.04),
+            10,
+            0.2,
+            0,
+            2
+    );
+}
+
+.text-field:focused,
+.password-field:focused {
+    -fx-border-color: rgba(126,200,255,0.75);
+    -fx-background-color: rgba(255,255,255,0.18);
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(126,200,255,0.18),
+            18,
+            0.25,
+            0,
+            0
+    );
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: linear-gradient(
+            to right,
+            #2E86C1,
+            #5DADE2
+    );
+
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+
+    -fx-background-radius: 14;
+    -fx-padding: 12 28;
+
+    -fx-cursor: hand;
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(46,134,193,0.35),
+            20,
+            0.25,
+            0,
+            6
+    );
+}
+
+.button:hover {
+    -fx-background-color: linear-gradient(
+            to right,
+            #1B4F72,
+            #3498DB
+    );
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(52,152,219,0.45),
+            24,
+            0.3,
+            0,
+            8
+    );
+}
+
+/* Error Text */
+.error-text {
+    -fx-text-fill: #FF6B6B;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+}

@@ -1,0 +1,73 @@
+.login-overlay {
+    -fx-background-color: linear-gradient(
+            to right,
+            rgba(0,0,0,0.60),
+            rgba(0,0,0,0.35)
+    );
+}
+
+.hero-section {
+    -fx-min-width: 600;
+    -fx-pref-width: 650;
+    -fx-max-width: 700;
+}
+
+.hero-title {
+    -fx-text-fill: white;
+    -fx-font-size: 46px;
+    -fx-font-weight: bold;
+}
+
+.hero-subtitle {
+    -fx-text-fill: rgba(255,255,255,0.82);
+    -fx-font-size: 20px;
+    -fx-line-spacing: 8px;
+}
+
+.login-card {
+    -fx-background-color: rgba(255,255,255,0.08);
+
+    -fx-background-radius: 30;
+    -fx-border-radius: 30;
+
+    -fx-border-color: rgba(255,255,255,0.16);
+    -fx-border-width: 1.2;
+
+    -fx-padding: 42;
+
+    -fx-pref-width: 380;
+    -fx-pref-height: 420;
+
+    -fx-spacing: 18;
+
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.45),
+            55,
+            0.35,
+            0,
+            15
+    );
+}
+
+.login-brand {
+    -fx-text-fill: white;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.login-subtitle {
+    -fx-text-fill: rgba(255,255,255,0.75);
+    -fx-font-size: 14px;
+}
+
+.forgot-password {
+    -fx-text-fill: #7EC8FF;
+    -fx-border-color: transparent;
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+}
+
+.forgot-password:hover {
+    -fx-text-fill: white;
+}
