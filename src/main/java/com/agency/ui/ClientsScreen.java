@@ -1,46 +1,54 @@
 package com.agency.ui;
 
-import com.agency.model.Client;
 import com.agency.db.ClientRepository;
+import com.agency.db.DocumentRepository;
+import com.agency.db.TripRepository;
+import com.agency.model.Client;
+import com.agency.model.Document;
+import com.agency.model.Trip;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 
+import java.awt.*;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ClientsScreen {
 
     private static final int PAGE_SIZE = 8;
 
-    // 🔥 SOURCE DATA (DB ↔ UI bridge)
-    private static final ObservableList<Client> masterData =
-            FXCollections.observableArrayList();
-
-    // 🔥 FILTER WRAPPER
-    private static final FilteredList<Client> filteredClients =
-            new FilteredList<>(masterData, p -> true);
-
     public static VBox getView() {
         VBox root = new VBox(20);
         root.getStyleClass().add("client-root");
-
-        loadFromDB();   // initial load
         showClientList(root);
-
         return root;
     }
 
-    private static void loadFromDB() {
-        List<Client> freshData = ClientRepository.getAllClients();
-        masterData.setAll(freshData);   // ✅ ONLY CORRECT WAY
+    public static VBox getAddClientViewDirect() {
+        VBox root = new VBox(22);
+        root.getStyleClass().add("client-root");
+        showClientForm(root, null);
+        return root;
     }
 
     private static void showClientList(VBox root) {
         root.getChildren().clear();
+
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label("Clients");
         title.getStyleClass().add("client-title");
@@ -50,44 +58,65 @@ public class ClientsScreen {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox header = new HBox(title, spacer, addBtn);
-        header.setAlignment(Pos.CENTER_LEFT);
+        header.getChildren().addAll(title, spacer, addBtn);
 
         TextField search = new TextField();
         search.setPromptText("Search clients...");
         search.getStyleClass().add("client-search");
 
+        ObservableList<Client> clientList =
+                FXCollections.observableArrayList(ClientRepository.getAllClients());
+
+        FilteredList<Client> filteredClients =
+                new FilteredList<>(clientList, p -> true);
+
         TableView<Client> table = new TableView<>();
+        table.getStyleClass().add("client-table");
+        table.setPlaceholder(new Label("No clients available"));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Client, Number> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(c ->
-                new SimpleIntegerProperty(c.getValue().getId())
-        );
+        idCol.setCellValueFactory(c -> new SimpleIntegerProperty(filteredClients.indexOf(c.getValue()) + 1));
 
         TableColumn<Client, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(c ->
-                new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
 
         TableColumn<Client, String> phoneCol = new TableColumn<>("Phone");
-        phoneCol.setCellValueFactory(c ->
-                new javafx.beans.property.SimpleStringProperty(c.getValue().getPhone()));
+        phoneCol.setCellValueFactory(new PropertyValueFactory<>("phone"));
 
         TableColumn<Client, String> emailCol = new TableColumn<>("Email");
-        emailCol.setCellValueFactory(c ->
-                new javafx.beans.property.SimpleStringProperty(c.getValue().getEmail()));
+        emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
 
         TableColumn<Client, String> cityCol = new TableColumn<>("City");
-        cityCol.setCellValueFactory(c ->
-                new javafx.beans.property.SimpleStringProperty(c.getValue().getCity()));
+        cityCol.setCellValueFactory(new PropertyValueFactory<>("city"));
+
+        TableColumn<Client, Void> detailsCol = new TableColumn<>("Details");
+
+        detailsCol.setCellFactory(col -> new TableCell<>() {
+            private final Button viewBtn = new Button("View");
+            private final HBox box = new HBox(viewBtn);
+
+            {
+                viewBtn.getStyleClass().add("view-details-btn");
+                box.setAlignment(Pos.CENTER);
+
+                viewBtn.setOnAction(e -> {
+                    Client client = getTableView().getItems().get(getIndex());
+                    showClientDetails(root, client);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : box);
+            }
+        });
 
         TableColumn<Client, Void> actionCol = new TableColumn<>("Actions");
-
         actionCol.setCellFactory(col -> new TableCell<>() {
-
-            private final Button editBtn = new Button("✎");
-            private final Button deleteBtn = new Button("🗑");
+            private final Button editBtn = createIconButton("/icons/edit.png", "✎", "edit-btn");
+            private final Button deleteBtn = createIconButton("/icons/delete.png", "🗑", "delete-btn");
             private final HBox box = new HBox(12, editBtn, deleteBtn);
 
             {
@@ -101,9 +130,26 @@ public class ClientsScreen {
                 deleteBtn.setOnAction(e -> {
                     Client client = getTableView().getItems().get(getIndex());
 
-                    ClientRepository.deleteClient(client.getId());
-                    loadFromDB();     // 🔥 refresh data
-                    table.refresh();
+                    boolean hasTrips = TripRepository.getAllTrips()
+                            .stream()
+                            .anyMatch(t -> t.getClientId() == client.getId());
+
+                    if (hasTrips) {
+                        alert("This client has linked trips. Please delete the trips first or keep the client record for history.");
+                        return;
+                    }
+
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Delete Client");
+                    confirm.setHeaderText("Are you sure you want to delete this client?");
+                    confirm.setContentText("Client: " + client.getName());
+
+                    confirm.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.OK) {
+                            ClientRepository.deleteClient(client.getId());
+                            showClientList(root);
+                        }
+                    });
                 });
             }
 
@@ -111,26 +157,27 @@ public class ClientsScreen {
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
                 setGraphic(empty ? null : box);
+                setAlignment(Pos.CENTER);
             }
         });
 
-        table.getColumns().addAll(idCol, nameCol, phoneCol, emailCol, cityCol, actionCol);
+        table.getColumns().addAll(idCol, nameCol, phoneCol, emailCol, cityCol, detailsCol, actionCol);
 
-        // 🔥 FIXED TABLE BINDING
-        table.setItems(filteredClients);
-
-        // pagination
-        Button prev = new Button("‹ Prev");
-        Button next = new Button("Next ›");
+        Button prevBtn = new Button("‹ Prev");
+        Button nextBtn = new Button("Next ›");
         Label pageInfo = new Label();
 
-        HBox pagination = new HBox(12, prev, pageInfo, next);
+        prevBtn.getStyleClass().add("page-btn");
+        nextBtn.getStyleClass().add("page-btn");
+        pageInfo.getStyleClass().add("page-info");
+
+        HBox pagination = new HBox(12, prevBtn, pageInfo, nextBtn);
         pagination.setAlignment(Pos.CENTER_RIGHT);
+        pagination.getStyleClass().add("pagination-box");
 
-        final int[] currentPage = {0};
+        int[] currentPage = {0};
 
-        Runnable refresh = () -> {
-
+        Runnable updateTable = () -> {
             int total = filteredClients.size();
             int pageCount = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
 
@@ -140,46 +187,166 @@ public class ClientsScreen {
             int from = currentPage[0] * PAGE_SIZE;
             int to = Math.min(from + PAGE_SIZE, total);
 
-            table.setItems(FXCollections.observableArrayList(
-                    filteredClients.subList(from, to)
-            ));
+            table.setItems(FXCollections.observableArrayList(filteredClients.subList(from, to)));
 
             pageInfo.setText("Page " + (currentPage[0] + 1) + " of " + pageCount);
-            prev.setDisable(currentPage[0] == 0);
-            next.setDisable(currentPage[0] >= pageCount - 1);
+            prevBtn.setDisable(currentPage[0] == 0);
+            nextBtn.setDisable(currentPage[0] >= pageCount - 1);
         };
 
         search.textProperty().addListener((obs, oldVal, newVal) -> {
-            String keyword = newVal.toLowerCase().trim();
+            String keyword = newVal == null ? "" : newVal.toLowerCase().trim();
 
-            filteredClients.setPredicate(c -> {
+            filteredClients.setPredicate(client -> {
                 if (keyword.isEmpty()) return true;
 
-                return c.getName().toLowerCase().contains(keyword)
-                        || c.getPhone().toLowerCase().contains(keyword)
-                        || c.getEmail().toLowerCase().contains(keyword)
-                        || c.getCity().toLowerCase().contains(keyword);
+                return safe(client.getName()).toLowerCase().contains(keyword)
+                        || safe(client.getPhone()).toLowerCase().contains(keyword)
+                        || safe(client.getEmail()).toLowerCase().contains(keyword)
+                        || safe(client.getCity()).toLowerCase().contains(keyword);
             });
 
             currentPage[0] = 0;
-            refresh.run();
+            updateTable.run();
         });
 
-        prev.setOnAction(e -> {
+        prevBtn.setOnAction(e -> {
             currentPage[0]--;
-            refresh.run();
+            updateTable.run();
         });
 
-        next.setOnAction(e -> {
+        nextBtn.setOnAction(e -> {
             currentPage[0]++;
-            refresh.run();
+            updateTable.run();
         });
 
         addBtn.setOnAction(e -> showClientForm(root, null));
 
-        refresh.run();
+        updateTable.run();
 
-        root.getChildren().addAll(header, search, table, pagination);
+        VBox tableWrapper = new VBox(table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        VBox.setVgrow(tableWrapper, Priority.ALWAYS);
+
+        root.getChildren().addAll(header, search, tableWrapper, pagination);
+    }
+
+    private static void showClientDetails(VBox root, Client client) {
+        root.getChildren().clear();
+
+        Button backBtn = new Button("← Back");
+        backBtn.getStyleClass().add("back-btn");
+
+        Label title = new Label("Client Details");
+        title.getStyleClass().add("client-title");
+
+        HBox header = new HBox(14, backBtn, title);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        VBox card = new VBox(14);
+        card.getStyleClass().add("panel");
+
+        Label clientTitle = new Label("Client Information");
+        clientTitle.getStyleClass().add("section-title");
+
+        Label clientInfo = new Label(
+                "Name: " + safe(client.getName()) +
+                        "\nPhone: " + safe(client.getPhone()) +
+                        "\nEmail: " + safe(client.getEmail()) +
+                        "\nCity: " + safe(client.getCity())
+        );
+
+        Label tripsTitle = new Label("Linked Trips");
+        tripsTitle.getStyleClass().add("section-title");
+
+        VBox tripsBox = new VBox(8);
+
+        double totalPurchase = 0;
+        double totalSell = 0;
+        double totalProfit = 0;
+        int tripCount = 0;
+
+        List<Trip> trips = TripRepository.getAllTrips();
+
+        for (Trip trip : trips) {
+            if (trip.getClientId() == client.getId()) {
+                tripCount++;
+                totalPurchase += trip.getPurchaseValue();
+                totalSell += trip.getSellValue();
+                totalProfit += trip.getProfit();
+
+                tripsBox.getChildren().add(new Label(
+                        safe(trip.getDate()) + " | " +
+                                safe(trip.getDestination()) + " | " +
+                                safe(trip.getStatus()) + " | Profit: " + trip.getProfit()
+                ));
+            }
+        }
+
+        if (tripCount == 0) {
+            tripsBox.getChildren().add(new Label("No trips found for this client."));
+        }
+
+        Label totalsTitle = new Label("Business Summary");
+        totalsTitle.getStyleClass().add("section-title");
+
+        Label totals = new Label(
+                "Total Trips: " + tripCount +
+                        "\nTotal Purchase: " + totalPurchase +
+                        "\nTotal Sell: " + totalSell +
+                        "\nTotal Profit: " + totalProfit
+        );
+
+        Label docsTitle = new Label("Documents");
+        docsTitle.getStyleClass().add("section-title");
+
+        VBox docsBox = new VBox(8);
+
+        List<Document> allDocs = new ArrayList<>();
+
+
+        for (Trip t : trips) {
+            if (t.getClientId() == client.getId()) {
+                allDocs.addAll(DocumentRepository.getDocumentsByTrip(t.getId()));
+            }
+        }
+
+        if (allDocs.isEmpty()) {
+            docsBox.getChildren().add(new Label("No documents uploaded yet."));
+        } else {
+            for (Document doc : allDocs) {
+
+                File file = new File(doc.getFilePath());
+
+                Label fileLabel = new Label(file.getName());
+
+                Button view = new Button("View");
+                view.getStyleClass().add("view-details-btn");
+
+                view.setOnAction(e -> {
+                    try {
+                        Desktop.getDesktop().open(file);
+                    } catch (Exception ex) {
+                        alert("Cannot open file");
+                    }
+                });
+
+                HBox row = new HBox(10, fileLabel, view);
+                row.setAlignment(Pos.CENTER_LEFT);
+
+                docsBox.getChildren().add(row);
+            }
+        }
+        card.getChildren().addAll(
+                clientTitle, clientInfo,
+                tripsTitle, tripsBox,
+                totalsTitle, totals,
+                docsTitle, docsBox
+        );
+
+        backBtn.setOnAction(e -> showClientList(root));
+
+        root.getChildren().addAll(header, card);
     }
 
     private static void showClientForm(VBox root, Client editClient) {
@@ -187,12 +354,24 @@ public class ClientsScreen {
 
         boolean isEdit = editClient != null;
 
-        Label title = new Label(isEdit ? "Edit Client" : "Add Client");
+        Button backBtn = new Button("← Back");
+        backBtn.getStyleClass().add("back-btn");
 
-        TextField name = new TextField();
-        TextField phone = new TextField();
-        TextField email = new TextField();
-        TextField city = new TextField();
+        Label title = new Label(isEdit ? "Edit Client" : "Add New Client");
+        title.getStyleClass().add("client-title");
+
+        HBox header = new HBox(14, backBtn, title);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        GridPane form = new GridPane();
+        form.setHgap(20);
+        form.setVgap(18);
+        form.getStyleClass().add("client-form-card");
+
+        TextField name = input("Enter full name");
+        TextField phone = input("Enter phone number");
+        TextField email = input("Enter email address");
+        TextField city = input("Enter city");
 
         if (isEdit) {
             name.setText(editClient.getName());
@@ -201,32 +380,86 @@ public class ClientsScreen {
             city.setText(editClient.getCity());
         }
 
-        Button save = new Button(isEdit ? "Update" : "Save");
-        Button back = new Button("← Back");
+        form.add(label("Name"), 0, 0);
+        form.add(name, 0, 1);
+        form.add(label("Phone"), 1, 0);
+        form.add(phone, 1, 1);
+        form.add(label("Email"), 0, 2);
+        form.add(email, 0, 3);
+        form.add(label("City"), 1, 2);
+        form.add(city, 1, 3);
+
+        Button save = new Button(isEdit ? "Update Client" : "Save Client");
+        save.getStyleClass().add("client-add-btn");
 
         save.setOnAction(e -> {
+            if (name.getText().trim().isEmpty()) {
+                alert("Client name is required");
+                return;
+            }
 
-            Client c = new Client(
+            if (phone.getText().trim().isEmpty()) {
+                alert("Mobile number is required");
+                return;
+            }
+
+            Client client = new Client(
                     isEdit ? editClient.getId() : 0,
-                    name.getText(),
-                    phone.getText(),
-                    email.getText(),
-                    city.getText()
+                    name.getText().trim(),
+                    phone.getText().trim(),
+                    email.getText().trim(),
+                    city.getText().trim()
             );
 
             if (isEdit) {
-                ClientRepository.updateClient(c);
+                ClientRepository.updateClient(client);
             } else {
-                ClientRepository.addClient(c);
+                ClientRepository.addClient(client);
             }
 
-            loadFromDB(); // 🔥 sync again from DB
             showClientList(root);
         });
 
-        back.setOnAction(e -> showClientList(root));
+        backBtn.setOnAction(e -> showClientList(root));
 
-        VBox form = new VBox(12, title, name, phone, email, city, save);
-        root.getChildren().addAll(back, form);
+        root.getChildren().addAll(header, form, save);
+    }
+
+    private static Button createIconButton(String iconPath, String fallbackText, String styleClass) {
+        Node graphic = null;
+
+        try {
+            ImageView icon = new ImageView(new Image(ClientsScreen.class.getResource(iconPath).toExternalForm()));
+            icon.setFitWidth(16);
+            icon.setFitHeight(16);
+            graphic = icon;
+        } catch (Exception ignored) {}
+
+        Button btn = graphic == null ? new Button(fallbackText) : new Button("", graphic);
+        btn.getStyleClass().add(styleClass);
+        return btn;
+    }
+
+    private static TextField input(String prompt) {
+        TextField field = new TextField();
+        field.setPromptText(prompt);
+        field.getStyleClass().add("client-input");
+        return field;
+    }
+
+    private static Label label(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("form-label");
+        return label;
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static void alert(String msg) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setContentText(msg);
+        alert.show();
     }
 }

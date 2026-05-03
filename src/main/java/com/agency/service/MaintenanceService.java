@@ -7,6 +7,6 @@ public class MaintenanceService {
     public static boolean isUnderMaintenance() {
         LocalDate today = LocalDate.now();
 
-        return today.getDayOfMonth() == 26 && today.getMonthValue() == 4 && today.getYear()>2026;
+        return today.getDayOfMonth() ==1 && today.getMonthValue() == 6 && today.getYear()>2026;
     }
 }

@@ -12,6 +12,8 @@ public class Document {
         this.filePath = filePath;
     }
 
+    // ================= GETTERS =================
+
     public int getId() {
         return id;
     }
@@ -21,6 +23,23 @@ public class Document {
     }
 
     public String getFilePath() {
+        return filePath;
+    }
+
+    // ================= SETTERS =================
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    // ================= UI HELPER =================
+
+    @Override
+    public String toString() {
         return filePath;
     }
 }

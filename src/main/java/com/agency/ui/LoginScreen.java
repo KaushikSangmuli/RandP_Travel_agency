@@ -137,7 +137,7 @@ public class LoginScreen {
                 && password.getText().equals("admin123")) {
 
             message.setText("Login Success");
-            com.agency.ui.DashboardScreen.show(
+            DashboardScreen.show(
                     (Stage) username.getScene().getWindow()
             );
         } else {

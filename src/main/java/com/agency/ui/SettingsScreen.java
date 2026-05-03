@@ -1,23 +1,18 @@
 package com.agency.ui;
 
-import com.agency.data.ClientData;
-import com.agency.data.TripData;
+import com.agency.db.ClientRepository;
+import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
-
-
-
-
-
 import java.io.*;
+import java.util.List;
 
 public class SettingsScreen {
 
     private static boolean dailyBackupEnabled = false;
-    private static boolean darkModeEnabled = false;
     private static boolean notificationsEnabled = true;
 
     public static VBox getView() {
@@ -50,24 +45,19 @@ public class SettingsScreen {
 
         VBox app = card("⚙ App Settings");
 
-        CheckBox darkMode = toggle(darkModeEnabled);
+
         CheckBox notifications = toggle(notificationsEnabled);
 
-        HBox darkRow = toggleRow("Enable Dark Mode", darkMode);
+
         HBox notificationRow = toggleRow("Enable Notifications", notifications);
 
-        darkMode.setOnAction(e -> {
-            darkModeEnabled = darkMode.isSelected();
-            DashboardScreen.setDarkMode(darkModeEnabled);
-            alert(darkModeEnabled ? "Dark mode enabled" : "Dark mode disabled");
-        });
 
         notifications.setOnAction(e -> {
             notificationsEnabled = notifications.isSelected();
             alert(notificationsEnabled ? "Notifications enabled" : "Notifications disabled");
         });
 
-        app.getChildren().addAll(darkRow, notificationRow);
+        app.getChildren().addAll(notificationRow);
 
         VBox backup = card("💾 Backup & Data");
 
@@ -101,8 +91,8 @@ public class SettingsScreen {
         info.getChildren().addAll(
                 new Label("Version: 1.0.0"),
                 new Label("Company: KP Tours & Travels"),
-                new Label("Clients: " + ClientData.clients.size()),
-                new Label("Trips: " + TripData.trips.size())
+                new Label("Clients: " + ClientRepository.getAllClients().size()),
+                new Label("Trips: " + TripRepository.getAllTrips().size())
         );
 
         HBox top = new HBox(20, profile, app);
@@ -122,22 +112,38 @@ public class SettingsScreen {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("kp_backup.txt"));
 
-            for (Client c : ClientData.clients) {
-                writer.write("CLIENT|" + c.getName() + "|" + c.getPhone() + "|" + c.getEmail() + "|" + c.getCity());
+            List<Client> clients = ClientRepository.getAllClients();
+            List<Trip> trips = TripRepository.getAllTrips();
+
+            for (Client c : clients) {
+                writer.write("CLIENT|" +
+                        safe(c.getName()) + "|" +
+                        safe(c.getPhone()) + "|" +
+                        safe(c.getEmail()) + "|" +
+                        safe(c.getCity()));
                 writer.newLine();
             }
 
-            for (Trip t : TripData.trips) {
-                writer.write("TRIP|" + t.getClientId() + "|" + t.getClientName() + "|" +
-                        t.getDestination() + "|" + t.getDate() + "|" + t.getType() + "|" +
-                        t.getStatus() + "|" + t.getPurchaseValue() + "|" + t.getSellValue() + "|" +
-                        t.getAirlineName());
+            for (Trip t : trips) {
+                writer.write("TRIP|" +
+                        t.getClientId() + "|" +
+                        safe(t.getClientName()) + "|" +
+                        safe(t.getDestination()) + "|" +
+                        safe(t.getDate()) + "|" +
+                        safe(t.getType()) + "|" +
+                        safe(t.getStatus()) + "|" +
+                        t.getPurchaseValue() + "|" +
+                        t.getSellValue() + "|" +
+                        safe(t.getAirlineName()) + "|" +
+                        t.getServiceFee());
                 writer.newLine();
             }
 
             writer.close();
             alert("Backup saved successfully");
+
         } catch (Exception e) {
+            e.printStackTrace();
             alert("Backup failed");
         }
     }
@@ -146,38 +152,81 @@ public class SettingsScreen {
         try {
             BufferedReader reader = new BufferedReader(new FileReader("kp_backup.txt"));
 
-            ClientData.clients.clear();
-            TripData.trips.clear();
+            for (Trip t : TripRepository.getAllTrips()) {
+                TripRepository.deleteTrip(t.getId());
+            }
+
+            for (Client c : ClientRepository.getAllClients()) {
+                ClientRepository.deleteClient(c.getId());
+            }
 
             String line;
 
             while ((line = reader.readLine()) != null) {
-                String[] p = line.split("\\|");
+                String[] p = line.split("\\|", -1);
 
-                if (p[0].equals("CLIENT")) {
-                    ClientData.clients.add(new Client(p[1], p[2], p[3], p[4]));
+                if (p.length == 0) continue;
+
+                if ("CLIENT".equals(p[0]) && p.length >= 5) {
+                    ClientRepository.addClient(
+                            new Client(
+                                    0,
+                                    p[1],
+                                    p[2],
+                                    p[3],
+                                    p[4]
+                            )
+                    );
                 }
 
-                if (p[0].equals("TRIP")) {
-                    TripData.trips.add(new Trip(
-                            Integer.parseInt(p[1]),
-                            p[2],
-                            p[3],
-                            p[4],
-                            p[5],
-                            p[6],
-                            Double.parseDouble(p[7]),
-                            Double.parseDouble(p[8]),
-                            p[9]
-                    ));
+                if ("TRIP".equals(p[0]) && p.length >= 11) {
+                    int clientId = Integer.parseInt(p[1]);
+                    String clientName = p[2];
+                    String destination = p[3];
+                    String date = p[4];
+                    String type = p[5];
+                    String status = p[6];
+                    double purchaseValue = parseDouble(p[7]);
+                    double sellValue = parseDouble(p[8]);
+                    String airlineName = p[9];
+                    double serviceFee = parseDouble(p[10]);
+
+                    TripRepository.addTrip(
+                            new Trip(
+                                    clientId,
+                                    clientName,
+                                    destination,
+                                    date,
+                                    type,
+                                    status,
+                                    purchaseValue,
+                                    sellValue,
+                                    airlineName,
+                                    serviceFee
+                            )
+                    );
                 }
             }
 
             reader.close();
             alert("Restore completed successfully");
+
         } catch (Exception e) {
+            e.printStackTrace();
             alert("No backup file found or restore failed");
         }
+    }
+
+    private static double parseDouble(String value) {
+        try {
+            return value == null || value.isEmpty() ? 0.0 : Double.parseDouble(value);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value.replace("|", " ");
     }
 
     private static VBox card(String heading) {

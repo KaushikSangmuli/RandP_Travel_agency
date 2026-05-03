@@ -1,8 +1,7 @@
-package com.agency.db;//package com.agency.repository;
+package com.agency.db;
 
-import com.agency.db.DBConnection;
 import com.agency.model.Client;
-import com.agency.db.*;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,7 @@ public class ClientRepository {
         String sql = "INSERT INTO clients (name, phone, email, city) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, c.getName());
             ps.setString(2, c.getPhone());
@@ -23,16 +22,22 @@ public class ClientRepository {
 
             ps.executeUpdate();
 
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    c.setId(rs.getInt(1));
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // READ
+    // READ ALL
     public static List<Client> getAllClients() {
         List<Client> list = new ArrayList<>();
 
-        String sql = "SELECT * FROM clients";
+        String sql = "SELECT * FROM clients ORDER BY id DESC";
 
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement();
@@ -54,6 +59,34 @@ public class ClientRepository {
         }
 
         return list;
+    }
+
+    // READ BY ID
+    public static Client getClientById(int id) {
+        String sql = "SELECT * FROM clients WHERE id=?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Client(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("phone"),
+                            rs.getString("email"),
+                            rs.getString("city")
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     // UPDATE

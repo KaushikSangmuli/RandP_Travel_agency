@@ -1,30 +1,34 @@
 package com.agency.ui;
 
-//import com.agency.data.TripData;
 import com.agency.db.DocumentRepository;
 import com.agency.db.TripRepository;
+import com.agency.model.Document;
 import com.agency.model.Trip;
-//import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 
 import java.awt.*;
 import java.io.File;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class DocumentScreen {
 
     private static VBox root;
-    private static ComboBox<String> tripBox;
+    private static TextField tripSearch;
+    private static ListView<Trip> tripList;
     private static VBox listBox;
+    private static Trip selectedTrip;
 
     public static VBox getView() {
-
-        root = new VBox(20);
+        root = new VBox(22);
         root.getStyleClass().add("client-root");
 
         buildUI();
@@ -33,36 +37,109 @@ public class DocumentScreen {
     }
 
     private static void buildUI() {
-
         Label title = new Label("Documents");
         title.getStyleClass().add("client-title");
 
-        // Trip Selection
-        tripBox = new ComboBox<>();
-        tripBox.setPromptText("Select Trip");
+        tripSearch = new TextField();
+        tripSearch.setPromptText("Search trip by client / destination / date");
+        tripSearch.getStyleClass().add("client-input");
 
+        tripList = new ListView<>();
+        tripList.setPrefHeight(140);
+        tripList.setMinHeight(140);
+        tripList.setMaxHeight(140);
+        tripList.setVisible(false);
+        tripList.setManaged(false);
+        tripList.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: #d6e0ee;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-background-radius: 10;"
+        );
 
         List<Trip> trips = TripRepository.getAllTrips();
 
-        for (Trip t : trips) {
-            tripBox.getItems().add(
-                    t.getId() + " - " + t.getClientName() + " - " + t.getDestination()
+        tripList.setCellFactory(param -> new ListCell<>() {
+            @Override
+            protected void updateItem(Trip t, boolean empty) {
+                super.updateItem(t, empty);
+
+                if (empty || t == null) {
+                    setText(null);
+                } else {
+                    setText(t.getId() + " - " + safe(t.getClientName()) + " - " + safe(t.getDestination()));
+                }
+            }
+        });
+
+        final boolean[] selectingTrip = {false};
+
+        tripSearch.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (selectingTrip[0]) return;
+
+            selectedTrip = null;
+
+            String keyword = newVal == null ? "" : newVal.toLowerCase().trim();
+
+            if (keyword.isEmpty()) {
+                tripList.setItems(FXCollections.observableArrayList());
+                tripList.setVisible(false);
+                tripList.setManaged(false);
+                refreshList();
+                return;
+            }
+
+            List<Trip> filteredTrips = trips.stream()
+                    .filter(t ->
+                            String.valueOf(t.getId()).contains(keyword)
+                                    || safe(t.getClientName()).toLowerCase().contains(keyword)
+                                    || safe(t.getDestination()).toLowerCase().contains(keyword)
+                                    || safe(t.getDate()).toLowerCase().contains(keyword)
+                                    || safe(t.getStatus()).toLowerCase().contains(keyword)
+                    )
+                    .collect(Collectors.toList());
+
+            tripList.setItems(FXCollections.observableArrayList(filteredTrips));
+
+            boolean showList = !filteredTrips.isEmpty();
+            tripList.setVisible(showList);
+            tripList.setManaged(showList);
+
+            refreshList();
+        });
+
+        tripList.setOnMouseClicked(e -> {
+            Trip t = tripList.getSelectionModel().getSelectedItem();
+
+            if (t == null) return;
+
+            selectedTrip = t;
+
+            selectingTrip[0] = true;
+
+            tripSearch.setText(
+                    t.getId() + " - " + safe(t.getClientName()) + " - " + safe(t.getDestination())
             );
-        }
 
-        Button uploadBtn = new Button("Upload PDF");
-        uploadBtn.getStyleClass().add("client-add-btn");
+            tripList.setVisible(false);
+            tripList.setManaged(false);
 
+            selectingTrip[0] = false;
+
+            refreshList();
+        });
+
+        Button uploadBtn = new Button("⬆ Upload Document");
+        uploadBtn.getStyleClass().add("green-btn");
         uploadBtn.setOnAction(e -> uploadFile());
 
-        HBox top = new HBox(15, tripBox, uploadBtn);
+        VBox searchBox = new VBox(8, tripSearch, tripList);
+
+        HBox top = new HBox(15, searchBox, uploadBtn);
         top.setAlignment(Pos.CENTER_LEFT);
 
-        listBox = new VBox(10);
+        listBox = new VBox(12);
         listBox.getStyleClass().add("panel");
-        tripBox.setOnAction(e -> refreshList());
-
-
 
         root.getChildren().addAll(title, top, listBox);
 
@@ -70,9 +147,8 @@ public class DocumentScreen {
     }
 
     private static void uploadFile() {
-
-        if (tripBox.getValue() == null) {
-            alert("Please select a trip");
+        if (selectedTrip == null) {
+            alert("Please search and select a trip first");
             return;
         }
 
@@ -88,11 +164,20 @@ public class DocumentScreen {
         if (selectedFile == null) return;
 
         try {
-            int tripId = Integer.parseInt(tripBox.getValue().split(" - ")[0]);
-
             File storageDir = getStorageDir();
 
-            String newFileName = System.currentTimeMillis() + "_" + selectedFile.getName();
+            String extension = selectedFile.getName()
+                    .substring(selectedFile.getName().lastIndexOf("."));
+
+            String safeClient = safe(selectedTrip.getClientName())
+                    .replaceAll("[^a-zA-Z0-9]", "_");
+
+            String newFileName =
+                    "trip_" + selectedTrip.getId() +
+                            "_" + safeClient +
+                            "_" + UUID.randomUUID().toString().substring(0, 5) +
+                            extension;
+
             File destFile = new File(storageDir, newFileName);
 
             java.nio.file.Files.copy(
@@ -101,79 +186,71 @@ public class DocumentScreen {
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING
             );
 
-            // ✅ SAVE TO DB
-            DocumentRepository.addDocument(tripId, destFile.getAbsolutePath());
+            DocumentRepository.addDocument(selectedTrip.getId(), destFile.getAbsolutePath());
 
             refreshList();
-
+            alert("Document uploaded successfully");
 
         } catch (Exception ex) {
+            ex.printStackTrace();
             alert("Failed to save document");
         }
     }
 
     private static void refreshList() {
-
         listBox.getChildren().clear();
 
-        List<Trip> trips = TripRepository.getAllTrips();
+        boolean hasData = false;
 
-        // 🔥 If no trip selected → show ALL documents
-        if (tripBox.getValue() == null) {
+        if (selectedTrip == null) {
+            List<Trip> trips = TripRepository.getAllTrips();
 
             for (Trip t : trips) {
-                var docs = DocumentRepository.getDocumentsByTrip(t.getId());
+                List<Document> docs = DocumentRepository.getDocumentsByTrip(t.getId());
 
-                for (var doc : docs) {
+                for (Document doc : docs) {
                     addRow(t, doc);
+                    hasData = true;
                 }
             }
 
-        }
-else{
+        } else {
+            List<Document> docs = DocumentRepository.getDocumentsByTrip(selectedTrip.getId());
 
-        // 🔥 If trip selected → filter
-        int tripId = Integer.parseInt(tripBox.getValue().split(" - ")[0]);
-
-        var docs = DocumentRepository.getDocumentsByTrip(tripId);
-
-        for (var doc : docs) {
-            addRow(null, doc);
-        }
+            for (Document doc : docs) {
+                addRow(null, doc);
+                hasData = true;
+            }
         }
 
-    }
-    private static void alert(String msg) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setContentText(msg);
-        alert.show();
+        if (!hasData) {
+            Label empty = new Label("No documents found");
+            empty.getStyleClass().add("card-subtitle");
+            listBox.getChildren().add(empty);
+        }
     }
 
-
-    private static File getStorageDir() {
-        File dir = new File(System.getProperty("user.home") + "/KP_Tours_Documents");
-
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        return dir;
-    }
-
-    private static void addRow(Trip trip, com.agency.model.Document doc) {
-
+    private static void addRow(Trip trip, Document doc) {
         File file = new File(doc.getFilePath());
 
-        String labelText = "File: " + file.getName();
+        Label name = new Label(file.getName());
+        name.getStyleClass().add("card-title");
 
-        if (trip != null) {
-            labelText = trip.getClientName() + " | " + trip.getDestination() + "\n" + labelText;
-        }
+        Label meta = new Label(
+                (trip != null
+                        ? safe(trip.getClientName()) + " • " + safe(trip.getDestination())
+                        : "Trip Document")
+                        + " | " + readableSize(file.length())
+        );
+        meta.getStyleClass().add("card-subtitle");
 
-        Label info = new Label(labelText);
+        VBox infoBox = new VBox(4, name, meta);
 
         Button view = new Button("View");
+        view.getStyleClass().add("blue-btn");
+
         Button delete = new Button("Delete");
+        delete.getStyleClass().add("delete-btn");
 
         view.setOnAction(e -> {
             try {
@@ -188,12 +265,39 @@ else{
             refreshList();
         });
 
-        HBox row = new HBox(15, info, view, delete);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox row = new HBox(12, infoBox, spacer, view, delete);
         row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("card");
 
         listBox.getChildren().add(row);
-//        refreshList();
     }
 
+    private static File getStorageDir() {
+        File dir = new File(System.getProperty("user.home") + "/KP_Tours_Documents");
 
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        return dir;
+    }
+
+    private static String readableSize(long size) {
+        if (size < 1024) return size + " B";
+        if (size < 1024 * 1024) return (size / 1024) + " KB";
+        return (size / (1024 * 1024)) + " MB";
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static void alert(String msg) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setContentText(msg);
+        alert.show();
+    }
 }

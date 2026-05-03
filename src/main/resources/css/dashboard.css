@@ -58,8 +58,7 @@
     -fx-text-fill: #0F172A;
 }
 
-.card,
-.panel {
+.card,.panel {
     -fx-background-color: white;
     -fx-background-radius: 14;
     -fx-padding: 18;
@@ -125,20 +124,14 @@
     -fx-background-color: #F8FAFC;
 }
 
-.status-confirmed {
-    -fx-background-color: #DCFCE7;
-    -fx-text-fill: #16A34A;
-    -fx-padding: 5 10;
-    -fx-background-radius: 14;
-    -fx-font-weight: bold;
-}
 
-.status-pending {
-    -fx-background-color: #FFEDD5;
-    -fx-text-fill: #F97316;
-    -fx-padding: 5 10;
-    -fx-background-radius: 14;
+
+.status-pill {
+    -fx-padding: 5 14;
+    -fx-background-radius: 20;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
+    -fx-alignment: center;
 }
 
 .view-details-btn {
@@ -204,3 +197,258 @@
     -fx-text-fill: #111827;
     -fx-font-weight: bold;
 }
+
+.calendar-cell {
+    -fx-background-color: white;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 10;
+}
+
+.calendar-cell:hover {
+    -fx-background-color: #F8FAFC;
+}
+
+.calendar-wrapper {
+    -fx-alignment: center;
+}
+
+.calendar-grid {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-padding: 15;
+}
+
+.calendar-dot {
+    -fx-text-fill: #F97316;
+    -fx-font-size: 11px;
+}
+
+.calendar-today {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 6 10;
+    -fx-background-radius: 20;
+}
+.toggle-switch {
+    -fx-pref-width: 42;
+    -fx-pref-height: 22;
+}
+
+.toggle-switch .box {
+    -fx-background-color: #CBD5F5;
+    -fx-background-radius: 20;
+    -fx-padding: 2;
+}
+
+.toggle-switch:selected .box {
+    -fx-background-color: #2563EB;
+}
+
+.toggle-switch .mark {
+    -fx-background-color: white;
+    -fx-background-radius: 50%;
+    -fx-padding: 8;
+    -fx-translate-x: -8;
+}
+
+.toggle-switch:selected .mark {
+    -fx-translate-x: 8;
+}
+
+.dark-mode .content,
+.dark-mode .client-root {
+    -fx-background-color: #0F172A;
+}
+
+.dark-mode .topbar,
+.dark-mode .panel,
+.dark-mode .card,
+.dark-mode .client-form-card,
+.dark-mode .trip-row,
+.dark-mode .calendar-cell {
+    -fx-background-color: #1E293B;
+    -fx-border-color: #334155;
+}
+
+.dark-mode .calendar-grid,
+.dark-mode .grid-pane,
+.dark-mode .trip-header-row {
+    -fx-background-color: #1E293B;
+}
+
+.dark-mode .client-title,
+.dark-mode .page-title,
+.dark-mode .section-title,
+.dark-mode .form-label,
+.dark-mode .trip-header-text,
+.dark-mode .label {
+    -fx-text-fill: #F8FAFC;
+}
+
+.dark-mode .card-title,
+.dark-mode .card-value,
+.dark-mode .date-label,
+.dark-mode .user-label {
+    -fx-text-fill: white;
+}
+
+.dark-mode .card-subtitle,
+.dark-mode .page-info {
+    -fx-text-fill: #CBD5E1;
+}
+
+.dark-mode .search,
+.dark-mode .client-input,
+.dark-mode .text-field {
+    -fx-background-color: #334155;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #CBD5E1;
+    -fx-border-color: #475569;
+}
+
+.dark-mode .calendar-cell:hover,
+.dark-mode .trip-row:hover {
+    -fx-background-color: #334155;
+}
+
+.dark-mode .scroll-pane,
+.dark-mode .scroll-pane .viewport {
+    -fx-background-color: #0F172A;
+}
+
+.table-cell {
+    -fx-text-overrun: ellipsis;
+}
+.trip-row .label,
+.trip-header-row .label {
+    -fx-alignment: CENTER;
+}
+
+.report-card {
+    -fx-background-radius: 16;
+    -fx-padding: 20;
+}
+
+.report-table {
+    -fx-alignment: center;
+}
+
+.status-pill {
+    -fx-padding: 5 14;
+    -fx-background-radius: 20;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.status-confirmed {
+    -fx-background-color: #DCFCE7;
+    -fx-text-fill: #15803D;
+}
+
+.status-pending {
+    -fx-background-color: #FFEDD5;
+    -fx-text-fill: #C2410C;
+}
+
+.status-cancelled {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #B91C1C;
+}
+/* ===== STATUS PILLS ===== */
+.status-pill {
+    -fx-padding: 5 14;
+    -fx-background-radius: 20;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.status-confirmed {
+    -fx-background-color: #DCFCE7;
+    -fx-text-fill: #15803D;
+}
+
+.status-pending {
+    -fx-background-color: #FFEDD5;
+    -fx-text-fill: #C2410C;
+}
+
+.status-cancelled {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #B91C1C;
+}
+
+/* ===== REPORT CARDS ===== */
+.report-card {
+    -fx-background-radius: 16;
+    -fx-padding: 20;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 12, 0.2, 0, 3);
+}
+
+.report-card-title {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.report-card-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+
+.report-card-blue {
+    -fx-border-color: #2563EB;
+    -fx-border-width: 0 0 4 0;
+}
+
+.report-card-green {
+    -fx-border-color: #22C55E;
+    -fx-border-width: 0 0 4 0;
+}
+
+.report-card-orange {
+    -fx-border-color: #F59E0B;
+    -fx-border-width: 0 0 4 0;
+}
+
+.report-card-red {
+    -fx-border-color: #EF4444;
+    -fx-border-width: 0 0 4 0;
+}
+
+/* ===== CHARTS ===== */
+.chart {
+    -fx-background-color: transparent;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+/* ===== TABLE ===== */
+.table-cell {
+    -fx-text-overrun: ellipsis;
+}
+
+.trip-row .label,
+.trip-header-row .label {
+    -fx-alignment: CENTER;
+}
+
+/* ===== DARK MODE REPORTS ===== */
+.dark-mode .report-card {
+    -fx-background-color: #1E293B;
+}
+
+.dark-mode .report-card-title {
+    -fx-text-fill: #CBD5E1;
+}
+
+.dark-mode .report-card-value {
+    -fx-text-fill: white;
+}
+
