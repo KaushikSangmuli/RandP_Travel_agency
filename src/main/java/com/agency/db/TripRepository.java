@@ -110,4 +110,94 @@ public class TripRepository {
             e.printStackTrace();
         }
     }
+
+    public static List<Trip> getTripsByClientId(int clientId) {
+
+        List<Trip> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM trips WHERE client_id = ?";
+
+        try (PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql)) {
+
+            ps.setInt(1, clientId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Trip t = new Trip(
+                        rs.getInt("client_id"),
+                        rs.getString("client_name"),
+                        rs.getString("destination"),
+                        rs.getString("date"),
+                        rs.getString("type"),
+                        rs.getString("status"),
+                        rs.getDouble("purchase_value"),
+                        rs.getDouble("sell_value"),
+                        rs.getString("airline_name")
+                );
+
+                t.setId(rs.getInt("id"));
+                t.setDocumentPath(rs.getString("document_path"));
+
+                list.add(t);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+
+    public static void addTripWithId(Trip t) {
+        String sql = "INSERT INTO trips (id, client_id, client_name, destination, date, type, status, airline_name, purchase_value, sell_value, document_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try {
+            Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, t.getId()); // 🔥 preserve ID
+            ps.setInt(2, t.getClientId());
+            ps.setString(3, t.getClientName());
+            ps.setString(4, t.getDestination());
+            ps.setString(5, t.getDate());
+            ps.setString(6, t.getType());
+            ps.setString(7, t.getStatus());
+            ps.setString(8, t.getAirlineName());
+            ps.setDouble(9, t.getPurchaseValue());
+            ps.setDouble(10, t.getSellValue());
+            ps.setString(11, t.getDocumentPath());
+
+            ps.executeUpdate();
+            ps.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static boolean existsById(int id) {
+        String sql = "SELECT 1 FROM trips WHERE id = ?";
+
+        try {
+            Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            boolean exists = rs.next();
+
+            rs.close();
+            ps.close();
+
+            return exists;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

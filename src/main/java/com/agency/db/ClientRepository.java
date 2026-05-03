@@ -90,4 +90,48 @@ public class ClientRepository {
             e.printStackTrace();
         }
     }
+
+    public static void addClientWithId(Client c) {
+        String sql = "INSERT INTO clients (id, name, phone, email, city) VALUES (?, ?, ?, ?, ?)";
+
+        try {
+            Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+
+            ps.setInt(1, c.getId());          // 🔥 preserve ID
+            ps.setString(2, c.getName());
+            ps.setString(3, c.getPhone());
+            ps.setString(4, c.getEmail());
+            ps.setString(5, c.getCity());
+
+            ps.executeUpdate();
+            ps.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean existsById(int id) {
+        String sql = "SELECT 1 FROM clients WHERE id = ?";
+
+        try {
+            Connection conn = DBConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            ResultSet rs = ps.executeQuery();
+            boolean exists = rs.next();
+
+            rs.close();
+            ps.close();
+
+            return exists;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }

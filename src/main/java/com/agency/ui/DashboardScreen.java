@@ -83,6 +83,12 @@ public class DashboardScreen {
             content.getChildren().clear();
             content.getChildren().add(DocumentScreen.getView());
         });
+
+        settingsBtn.setOnAction(e -> {
+            setActive(settingsBtn);
+            content.getChildren().clear();
+            content.getChildren().add(SettingsScreen.getView());
+        });
         BorderPane rightSide = new BorderPane();
         rightSide.setTop(createTopbar());
         rightSide.setCenter(content);
