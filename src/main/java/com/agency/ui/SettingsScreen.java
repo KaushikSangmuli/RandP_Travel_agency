@@ -1,12 +1,24 @@
 package com.agency.ui;
 
-import com.agency.data.ClientData;
-import com.agency.data.TripData;
+
+import com.agency.db.ClientRepository;
+import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import javafx.stage.FileChooser;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.FileWriter;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.agency.backup.BackupData;
+import com.agency.backup.ClientWithTrips;
 
 
 
@@ -42,7 +54,7 @@ public class SettingsScreen {
                 return;
             }
 
-            DashboardScreen.updateUserName(enteredName);
+//            DashboardScreen.updateUserName(enteredName);
             alert("Profile updated successfully");
         });
 
@@ -58,7 +70,7 @@ public class SettingsScreen {
 
         darkMode.setOnAction(e -> {
             darkModeEnabled = darkMode.isSelected();
-            DashboardScreen.setDarkMode(darkModeEnabled);
+//            DashboardScreen.setDarkMode(darkModeEnabled);
             alert(darkModeEnabled ? "Dark mode enabled" : "Dark mode disabled");
         });
 
@@ -101,8 +113,8 @@ public class SettingsScreen {
         info.getChildren().addAll(
                 new Label("Version: 1.0.0"),
                 new Label("Company: KP Tours & Travels"),
-                new Label("Clients: " + ClientData.clients.size()),
-                new Label("Trips: " + TripData.trips.size())
+                new Label("Clients: " + ClientRepository.getAllClients().size()),
+                new Label("Trips: " + TripRepository.getAllTrips().size())
         );
 
         HBox top = new HBox(20, profile, app);
@@ -120,63 +132,135 @@ public class SettingsScreen {
 
     private static void createBackup() {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("kp_backup.txt"));
+            File dir = new File(System.getProperty("user.home") + "/KP_BACKUP");
 
-            for (Client c : ClientData.clients) {
-                writer.write("CLIENT|" + c.getName() + "|" + c.getPhone() + "|" + c.getEmail() + "|" + c.getCity());
-                writer.newLine();
+            if (!dir.exists()) {
+                dir.mkdirs();
             }
 
-            for (Trip t : TripData.trips) {
-                writer.write("TRIP|" + t.getClientId() + "|" + t.getClientName() + "|" +
-                        t.getDestination() + "|" + t.getDate() + "|" + t.getType() + "|" +
-                        t.getStatus() + "|" + t.getPurchaseValue() + "|" + t.getSellValue() + "|" +
-                        t.getAirlineName());
-                writer.newLine();
+            LocalDateTime now = LocalDateTime.now();
+
+            String fileName = String.format(
+                    "%02d_%02d_%d_%02d_%02d_%02d_backup.json",
+                    now.getDayOfMonth(),
+                    now.getMonthValue(),
+                    now.getYear(),
+                    now.getHour(),
+                    now.getMinute(),
+                    now.getSecond()
+            );
+
+            File backupFile = new File(dir, fileName);
+
+            JSONObject root = new JSONObject();
+            JSONArray clientsArray = new JSONArray();
+
+            List<Client> clients = ClientRepository.getAllClients();
+
+            for (Client c : clients) {
+
+                JSONObject clientJson = new JSONObject();
+                clientJson.put("id", c.getId());
+                clientJson.put("name", c.getName());
+                clientJson.put("phone", c.getPhone());
+                clientJson.put("email", c.getEmail());
+                clientJson.put("city", c.getCity());
+
+                List<Trip> trips = TripRepository.getTripsByClientId(c.getId());
+                JSONArray tripsArray = new JSONArray();
+
+                for (Trip t : trips) {
+                    JSONObject tripJson = new JSONObject();
+
+                    tripJson.put("id", t.getId());
+                    tripJson.put("clientName", t.getClientName());
+                    tripJson.put("clientId", c.getId()); // 🔥 IMPORTANT
+                    tripJson.put("destination", t.getDestination());
+                    tripJson.put("date", t.getDate());
+                    tripJson.put("type", t.getType());
+                    tripJson.put("status", t.getStatus());
+                    tripJson.put("airlineName", t.getAirlineName());
+                    tripJson.put("purchaseValue", t.getPurchaseValue());
+                    tripJson.put("sellValue", t.getSellValue());
+                    tripJson.put("documentPath", t.getDocumentPath());
+
+                    tripsArray.put(tripJson);
+                }
+
+                clientJson.put("trips", tripsArray);
+                clientsArray.put(clientJson);
             }
 
-            writer.close();
-            alert("Backup saved successfully");
+            root.put("clients", clientsArray);
+
+            FileWriter file = new FileWriter(backupFile);
+            file.write(root.toString(4));
+            file.close();
+
+            alert("Backup saved:\n" + backupFile.getAbsolutePath());
+
         } catch (Exception e) {
+            e.printStackTrace();
             alert("Backup failed");
         }
     }
-
     private static void restoreBackup() {
         try {
-            BufferedReader reader = new BufferedReader(new FileReader("kp_backup.txt"));
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Select Backup File");
 
-            ClientData.clients.clear();
-            TripData.trips.clear();
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("JSON Files", "*.json")
+            );
 
-            String line;
+            File defaultDir = new File(System.getProperty("user.home") + "/KP_BACKUP");
+            if (defaultDir.exists()) {
+                chooser.setInitialDirectory(defaultDir);
+            }
 
-            while ((line = reader.readLine()) != null) {
-                String[] p = line.split("\\|");
+            File file = chooser.showOpenDialog(null);
 
-                if (p[0].equals("CLIENT")) {
-                    ClientData.clients.add(new Client(p[1], p[2], p[3], p[4]));
+            if (file == null) {
+                alert("No file selected");
+                return;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            BackupData data = mapper.readValue(file, BackupData.class);
+
+            for (ClientWithTrips c : data.clients) {
+
+                Client client = new Client(
+                        c.id,
+                        c.name,
+                        c.phone,
+                        c.email,
+                        c.city
+                );
+
+                if (ClientRepository.existsById(c.id)) {
+                    ClientRepository.updateClient(client);
+                } else {
+                    ClientRepository.addClientWithId(client);
                 }
 
-                if (p[0].equals("TRIP")) {
-                    TripData.trips.add(new Trip(
-                            Integer.parseInt(p[1]),
-                            p[2],
-                            p[3],
-                            p[4],
-                            p[5],
-                            p[6],
-                            Double.parseDouble(p[7]),
-                            Double.parseDouble(p[8]),
-                            p[9]
-                    ));
+                if (c.trips != null) {
+                    for (Trip t : c.trips) {
+
+                        if (TripRepository.existsById(t.getId())) {
+                            TripRepository.updateTrip(t.getId(), t);
+                        } else {
+                            TripRepository.addTripWithId(t);
+                        }
+                    }
                 }
             }
 
-            reader.close();
             alert("Restore completed successfully");
+
         } catch (Exception e) {
-            alert("No backup file found or restore failed");
+            e.printStackTrace();
+            alert("Restore failed");
         }
     }
 

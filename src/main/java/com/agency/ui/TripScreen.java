@@ -76,6 +76,8 @@ public class TripScreen {
                 new javafx.beans.property.SimpleStringProperty(String.valueOf(d.getValue().getPurchaseValue()))
         );
 
+
+
         TableColumn<Trip, String> sellCol = new TableColumn<>("Sell");
         sellCol.setCellValueFactory(d ->
                 new javafx.beans.property.SimpleStringProperty(String.valueOf(d.getValue().getSellValue()))
