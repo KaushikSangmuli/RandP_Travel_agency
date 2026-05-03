@@ -11,5 +11,5 @@ public class ClientWithTrips {
     public String email;
     public String city;
 
-    public List<Trip> trips;
+    public List<BackupTrip> trips;
 }

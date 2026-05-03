@@ -133,13 +133,23 @@ public class LoginScreen {
 
     private static void handleLogin(TextField username, PasswordField password, Label message) {
 
-        if (username.getText().equals("admin")
-                && password.getText().equals("admin123")) {
+        if (username.getText().equals(SettingsScreen.getLoginUsername())
+                && password.getText().equals(SettingsScreen.getLoginPassword())) {
 
             message.setText("Login Success");
-            com.agency.ui.DashboardScreen.show(
-                    (Stage) username.getScene().getWindow()
-            );
+
+            Stage stage = (Stage) username.getScene().getWindow();
+
+            boolean wasMaximized = stage.isMaximized();
+            double currentWidth = stage.getWidth();
+            double currentHeight = stage.getHeight();
+
+            DashboardScreen.show(stage);
+
+            stage.setWidth(currentWidth);
+            stage.setHeight(currentHeight);
+            stage.setMaximized(wasMaximized);
+
         } else {
             message.setText("Invalid credentials");
         }

@@ -1,6 +1,7 @@
 package com.agency.model;
 
 public class Trip {
+
     private int id;
     private int clientId;
     private String clientName;
@@ -11,15 +12,12 @@ public class Trip {
     private double purchaseValue;
     private double sellValue;
     private String airlineName;
-    private String documentPath;
+    private double serviceFee;
 
-    public Trip(){
+    public Trip(int clientId, String clientName, String destination, String date, String type,
+                String status, double purchaseValue, double sellValue,
+                String airlineName,  double serviceFee) {
 
-    }
-
-
-    public Trip( int clientId, String clientName, String destination, String date, String type,
-                String status, double purchaseValue, double sellValue, String airlineName) {
         this.clientId = clientId;
         this.clientName = clientName;
         this.destination = destination;
@@ -29,12 +27,12 @@ public class Trip {
         this.purchaseValue = purchaseValue;
         this.sellValue = sellValue;
         this.airlineName = airlineName;
+        this.serviceFee = serviceFee;
     }
 
+    // ================= GETTERS =================
+
     public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-
     public int getClientId() { return clientId; }
     public String getClientName() { return clientName; }
     public String getDestination() { return destination; }
@@ -45,15 +43,38 @@ public class Trip {
     public double getSellValue() { return sellValue; }
     public String getAirlineName() { return airlineName; }
 
+    public double getServiceFee() { return serviceFee; }
+
+    // ================= SETTERS =================
+
+    public void setId(int id) { this.id = id; }
+    public void setDestination(String destination) { this.destination = destination; }
+    public void setDate(String date) { this.date = date; }
+    public void setType(String type) { this.type = type; }
+    public void setStatus(String status) { this.status = status; }
+    public void setPurchaseValue(double purchaseValue) { this.purchaseValue = purchaseValue; }
+    public void setSellValue(double sellValue) { this.sellValue = sellValue; }
+    public void setAirlineName(String airlineName) { this.airlineName = airlineName; }
+
+    public void setServiceFee(double serviceFee) { this.serviceFee = serviceFee; }
+
+    // ================= BUSINESS LOGIC =================
+
     public double getProfit() {
-        return sellValue - purchaseValue;
+
+        if (status == null) return 0;
+
+        if ("Cancelled".equalsIgnoreCase(status)) {
+            return serviceFee; // profit from cancellation
+        }
+
+        return sellValue - purchaseValue; // normal trip profit
     }
 
-    public String getDocumentPath() {
-        return documentPath;
-    }
+    // ================= UI HELPER =================
 
-    public void setDocumentPath(String documentPath) {
-        this.documentPath = documentPath;
+    @Override
+    public String toString() {
+        return clientName + " - " + destination;
     }
 }
