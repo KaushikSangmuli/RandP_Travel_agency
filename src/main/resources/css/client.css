@@ -1,42 +1,6 @@
 .client-root {-fx-background-color:#F8FAFC;-fx-padding:28;}
 .client-title {-fx-font-size:28px;-fx-font-weight:bold;-fx-text-fill:#0F172A;}
-.today-date {
-    -fx-background-color: #2563EB;
-    -fx-background-radius: 8;
-}
 
-.today-date {
-    -fx-background-color: #2563EB;
-    -fx-background-radius: 8;
-}
-
-.today-date Label {
-    -fx-background-color: #77ef48;
-    -fx-text-fill: white;
-    -fx-padding: 4 8;
-    -fx-background-radius: 20;
-}
-.selected-date {
-    /*-fx-background-color: #1E40AF;*/
-    /*-fx-background-radius: 8;*/
-
-    /*-fx-font-weight: bold;*/
-    /*-fx-font-size: 16px;*/
-    /*-fx-text-fill: red;*/
-
-
-    -fx-background-color: #eb2574;
-    -fx-text-fill: #49e808;
-    -fx-padding: 4 8;
-    -fx-background-radius: 20;
-}
-
-.selected-date Label {
-    -fx-background-color: #2563EB;
-    -fx-text-fill: white;
-    -fx-padding: 4 8;
-    -fx-background-radius: 20;
-}
 .client-search {-fx-background-color:white;-fx-border-color:#E5E7EB;-fx-border-radius:10;-fx-background-radius:10;-fx-padding:12 14;-fx-font-size:14px;}
 
 .client-table {-fx-background-color:white;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#E5E7EB;-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.06),12,0.18,0,3);}
@@ -109,4 +73,49 @@
     -fx-background-radius: 12;
     -fx-padding: 4 10;
     -fx-font-weight: bold;
+}
+.grid-pane.panel {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-padding: 15;
+}
+.trip-row .label,
+.trip-header-row .label {
+    -fx-alignment: CENTER;
+}
+
+/* REPORT CARDS */
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 15;
+    -fx-spacing: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);
+}
+
+/* STATUS PILL BASE */
+.status-pill {
+    -fx-padding: 4 12;
+    -fx-background-radius: 20;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* STATUS COLORS */
+.status-confirmed {
+    -fx-background-color: #DCFCE7;
+    -fx-text-fill: #16A34A;
+}
+
+.status-pending {
+    -fx-background-color: #FEF3C7;
+    -fx-text-fill: #D97706;
+}
+
+.status-cancelled {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #DC2626;
+}
+.label {
+    -fx-alignment: CENTER;
 }

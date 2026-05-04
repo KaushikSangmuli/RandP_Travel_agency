@@ -1,6 +1,6 @@
 package com.agency.ui;
 
-import com.agency.data.TripData;
+import com.agency.db.TripRepository;
 import com.agency.model.Trip;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -9,6 +9,8 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+
+import java.util.List;
 
 public class ReportsScreen {
 
@@ -52,6 +54,12 @@ public class ReportsScreen {
         return root;
     }
 
+    // ================= DATA SOURCE =================
+    private static List<Trip> getTrips() {
+        return TripRepository.getAllTrips();
+    }
+
+    // ================= CARDS =================
     private static VBox reportCard(String title, String value, String styleClass) {
         VBox box = new VBox(8);
         box.getStyleClass().addAll("report-card", styleClass);
@@ -79,6 +87,7 @@ public class ReportsScreen {
         return box;
     }
 
+    // ================= CHARTS =================
     private static BarChart<String, Number> revenueChart() {
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
@@ -86,7 +95,6 @@ public class ReportsScreen {
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
         chart.setLegendVisible(false);
         chart.setPrefHeight(260);
-        chart.setAnimated(true);
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.getData().add(new XYChart.Data<>("Revenue", totalRevenue()));
@@ -95,7 +103,7 @@ public class ReportsScreen {
         chart.getData().add(series);
 
         Platform.runLater(() -> {
-            if (series.getData().size() > 0 && series.getData().get(0).getNode() != null) {
+            if (!series.getData().isEmpty()) {
                 series.getData().get(0).getNode().setStyle("-fx-bar-fill: #2563EB;");
                 series.getData().get(1).getNode().setStyle("-fx-bar-fill: #22C55E;");
             }
@@ -112,10 +120,8 @@ public class ReportsScreen {
         PieChart.Data cancelled = new PieChart.Data("Cancelled", countStatus("Cancelled"));
 
         chart.getData().addAll(confirmed, pending, cancelled);
-        chart.setLabelsVisible(true);
-        chart.setLegendVisible(true);
+
         chart.setPrefHeight(260);
-        chart.setAnimated(true);
 
         Platform.runLater(() -> {
             confirmed.getNode().setStyle("-fx-pie-color: #22C55E;");
@@ -126,6 +132,7 @@ public class ReportsScreen {
         return chart;
     }
 
+    // ================= TABLE =================
     private static TableView<Trip> reportTable() {
         TableView<Trip> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -143,31 +150,10 @@ public class ReportsScreen {
         profitCol.setCellValueFactory(data ->
                 new javafx.beans.property.SimpleStringProperty(money(data.getValue().getProfit())));
 
-        TableColumn<Trip, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleStringProperty(data.getValue().getStatus()));
-
-        statusCol.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-
-                if (empty || status == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
-
-                HBox box = new HBox(statusPill(status));
-                box.setAlignment(Pos.CENTER);
-                setGraphic(box);
-                setText(null);
-                setAlignment(Pos.CENTER);
-            }
-        });
+        TableColumn<Trip, String> statusCol = col("Status", "status");
 
         table.getColumns().addAll(clientCol, destCol, dateCol, revenueCol, profitCol, statusCol);
-        table.getItems().setAll(TripData.trips);
+        table.getItems().setAll(getTrips());
 
         return table;
     }
@@ -179,37 +165,22 @@ public class ReportsScreen {
         return col;
     }
 
-    private static Label statusPill(String status) {
-        Label pill = new Label(status);
-        pill.getStyleClass().add("status-pill");
-
-        if ("Confirmed".equalsIgnoreCase(status)) {
-            pill.getStyleClass().add("status-confirmed");
-        } else if ("Cancelled".equalsIgnoreCase(status)) {
-            pill.getStyleClass().add("status-cancelled");
-        } else {
-            pill.getStyleClass().add("status-pending");
-        }
-
-        return pill;
-    }
-
+    // ================= CALCULATIONS =================
     private static double totalRevenue() {
-        return TripData.trips.stream()
+        return getTrips().stream()
                 .filter(t -> "Confirmed".equalsIgnoreCase(t.getStatus()))
                 .mapToDouble(Trip::getSellValue)
                 .sum();
     }
 
     private static double totalProfit() {
-        return TripData.trips.stream()
-                .filter(t -> "Confirmed".equalsIgnoreCase(t.getStatus()))
+        return getTrips().stream()
                 .mapToDouble(Trip::getProfit)
                 .sum();
     }
 
     private static int countStatus(String status) {
-        return (int) TripData.trips.stream()
+        return (int) getTrips().stream()
                 .filter(t -> t.getStatus() != null && t.getStatus().equalsIgnoreCase(status))
                 .count();
     }

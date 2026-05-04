@@ -28,7 +28,7 @@ public class DBInit {
                         "airline_name TEXT," +
                         "purchase_value REAL," +
                         "sell_value REAL," +
-                        "document_path TEXT" +
+                        "service_fee REAL" +   // ✅ FIXED (removed comma)
                         ");";
 
         String documentsTable =
