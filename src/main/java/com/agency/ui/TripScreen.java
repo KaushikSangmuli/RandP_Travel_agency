@@ -8,8 +8,11 @@ import com.agency.model.Document;
 import com.agency.model.Trip;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.util.StringConverter;
 
@@ -19,7 +22,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import javafx.application.Platform;
+import static com.agency.ui.DashboardScreen.loadIcon;
 
 public class TripScreen {
 
@@ -54,7 +57,8 @@ public class TripScreen {
         Button clearFilter = new Button("Clear");
         clearFilter.getStyleClass().add("back-btn");
 
-        Button addBtn = new Button("+ Add New Trip");
+        Button addBtn = new Button("Add New Trip");
+        addBtn.setGraphic(loadIcon("plus.png",12));
         addBtn.getStyleClass().add("client-add-btn");
 
         Region spacer = new Region();
@@ -162,8 +166,8 @@ public class TripScreen {
 
         TableColumn<Trip, Void> actionsCol = new TableColumn<>("Actions");
         actionsCol.setCellFactory(param -> new TableCell<>() {
-            private final Button edit = new Button("✎");
-            private final Button delete = new Button("🗑");
+            private final Button edit = createIconButton("/icons/edit.png", "", "edit-btn");
+            private final Button delete = createIconButton("/icons/delete.png", "", "delete-btn");
             private final HBox box = new HBox(8, edit, delete);
 
             {
@@ -206,8 +210,9 @@ public class TripScreen {
                 airlineCol, purchaseCol, sellCol, profitCol, detailsCol, actionsCol
         );
 
-        Button prev = new Button("‹ Prev");
-        Button next = new Button("Next ›");
+        Button prev = new Button("Prev",loadIcon("left.png",10));
+        Button next = new Button("Next",loadIcon("right.png",10));
+        next.setContentDisplay(ContentDisplay.RIGHT);
         Label pageInfo = new Label();
 
         prev.getStyleClass().add("back-btn");
@@ -300,7 +305,7 @@ public class TripScreen {
 
         Client client = getClientById(trip.getClientId());
 
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("Back",loadIcon("backArrow.png",12));
         backBtn.getStyleClass().add("back-btn");
 
         Label title = new Label("Trip Details");
@@ -400,7 +405,7 @@ public class TripScreen {
 
         boolean isEdit = editTrip != null;
 
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("Back",loadIcon("backArrow.png",12));
         backBtn.getStyleClass().add("back-btn");
 
         Label title = new Label(isEdit ? "Edit Trip" : "Add New Trip");
@@ -704,5 +709,19 @@ public class TripScreen {
         Label label = new Label(text);
         label.getStyleClass().add("form-label");
         return label;
+    }
+    private static Button createIconButton(String iconPath, String fallbackText, String styleClass) {
+        Node graphic = null;
+
+        try {
+            ImageView icon = new ImageView(new Image(ClientsScreen.class.getResource(iconPath).toExternalForm()));
+            icon.setFitWidth(16);
+            icon.setFitHeight(16);
+            graphic = icon;
+        } catch (Exception ignored) {}
+
+        Button btn = graphic == null ? new Button(fallbackText) : new Button("", graphic);
+        btn.getStyleClass().add(styleClass);
+        return btn;
     }
 }

@@ -37,8 +37,15 @@ public class DashboardScreen {
         VBox sidebar = new VBox(14);
         sidebar.setPrefWidth(230);
         sidebar.getStyleClass().add("sidebar");
+        Image image = new Image(DashboardScreen.class.getResourceAsStream("/icons/tour.png"));
 
-        Label logo = new Label("✈ KP TOURS & TRAVELS");
+        ImageView icon = new ImageView(image);
+        icon.setFitHeight(16);
+        icon.setFitWidth(16);
+        icon.setPreserveRatio(true);
+        Label logo = new Label("KP TOURS & TRAVELS",icon);
+        logo.setMaxWidth(220);
+        logo.setWrapText(false);
         logo.getStyleClass().add("logo");
 
         dashboardBtn = createMenuButton("Dashboard", "/icons/dashboard.png", true);
@@ -221,8 +228,9 @@ public class DashboardScreen {
 
         VBox rows = new VBox(10);
 
-        Button prev = new Button("‹ Prev");
-        Button next = new Button("Next ›");
+        Button prev = new Button("Prev",loadIcon("left.png",10));
+        Button next = new Button("Next",loadIcon("right.png",10));
+        next.setContentDisplay(ContentDisplay.RIGHT);
         Label pageInfo = new Label();
 
         prev.getStyleClass().add("page-btn");
@@ -440,22 +448,26 @@ public class DashboardScreen {
         Label title = new Label("Quick Actions");
         title.getStyleClass().add("section-title");
 
-        Button addClient = createActionButton("+ Add New Client", "blue-btn");
+        Button addClient = createActionButton("Add New Client", "blue-btn");
+        addClient.setGraphic(loadIcon("plus.png",12));
         addClient.setOnAction(e -> {
             setActive(clientsBtn);
             content.getChildren().setAll(ClientsScreen.getAddClientViewDirect());
         });
 
-        Button addTrip = createActionButton("+ Add New Trip", "green-btn");
+        Button addTrip = createActionButton("Add New Trip", "green-btn");
+        addTrip.setGraphic(loadIcon("plus.png",12));
         addTrip.setOnAction(e -> loadAddTripScreen());
 
-        Button upload = createActionButton("⇧ Upload Document", "purple-btn");
+        Button upload = createActionButton("Upload Document", "purple-btn");
+        upload.setGraphic(loadIcon("upload.png",12));
         upload.setOnAction(e -> {
             setActive(documentsBtn);
             content.getChildren().setAll(DocumentScreen.getView());
         });
 
-        Button backup = createActionButton("⛁ Backup Now", "orange-btn");
+        Button backup = createActionButton("Backup Now", "orange-btn");
+        backup.setGraphic(loadIcon("backup.png",24));
         backup.setOnAction(e -> {
             setActive(settingsBtn);
             content.getChildren().setAll(SettingsScreen.getView());
@@ -712,5 +724,14 @@ public class DashboardScreen {
         if (userLabel != null && name != null && !name.isEmpty()) {
             userLabel.setText(name);
         }
+    }
+    public static ImageView loadIcon(String name, double size) {
+        ImageView icon = new ImageView(
+                new Image(DashboardScreen.class.getResourceAsStream("/icons/" + name))
+        );
+        icon.setFitWidth(size);
+        icon.setFitHeight(size);
+        icon.setPreserveRatio(true);
+        return icon;
     }
 }

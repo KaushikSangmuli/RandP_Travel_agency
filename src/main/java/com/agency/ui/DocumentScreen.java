@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -18,6 +19,8 @@ import java.io.File;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static com.agency.ui.DashboardScreen.loadIcon;
 
 public class DocumentScreen {
 
@@ -129,19 +132,29 @@ public class DocumentScreen {
             refreshList();
         });
 
-        Button uploadBtn = new Button("⬆ Upload Document");
+        Button uploadBtn = new Button("Upload Document", loadIcon("upload.png", 16));
         uploadBtn.getStyleClass().add("green-btn");
+        uploadBtn.setGraphicTextGap(8);
         uploadBtn.setOnAction(e -> uploadFile());
 
         VBox searchBox = new VBox(8, tripSearch, tripList);
+        searchBox.setPrefWidth(240);
 
         HBox top = new HBox(15, searchBox, uploadBtn);
         top.setAlignment(Pos.CENTER_LEFT);
 
         listBox = new VBox(12);
-        listBox.getStyleClass().add("panel");
 
-        root.getChildren().addAll(title, top, listBox);
+        ScrollPane scrollPane = new ScrollPane(listBox);
+        scrollPane.getStyleClass().add("panel");
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(430);
+        scrollPane.setMinHeight(300);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+
+        root.getChildren().addAll(title, top, scrollPane);
 
         refreshList();
     }
@@ -238,19 +251,26 @@ public class DocumentScreen {
 
         Label meta = new Label(
                 (trip != null
-                        ? safe(trip.getClientName()) + " • " + safe(trip.getDestination())
+                        ? safe(trip.getClientName()) + " | " + safe(trip.getDestination())
                         : "Trip Document")
                         + " | " + readableSize(file.length())
         );
         meta.getStyleClass().add("card-subtitle");
 
         VBox infoBox = new VBox(4, name, meta);
+        infoBox.setAlignment(Pos.CENTER_LEFT);
 
         Button view = new Button("View");
         view.getStyleClass().add("blue-btn");
+        view.setPrefWidth(90);
+        view.setMinWidth(90);
+        view.setMaxWidth(90);
 
         Button delete = new Button("Delete");
         delete.getStyleClass().add("delete-btn");
+        delete.setPrefWidth(75);
+        delete.setMinWidth(75);
+        delete.setMaxWidth(75);
 
         view.setOnAction(e -> {
             try {
@@ -268,9 +288,13 @@ public class DocumentScreen {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox row = new HBox(12, infoBox, spacer, view, delete);
+        HBox actions = new HBox(8, view, delete);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        HBox row = new HBox(12, infoBox, spacer, actions);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("card");
+        row.setMinHeight(76);
 
         listBox.getChildren().add(row);
     }

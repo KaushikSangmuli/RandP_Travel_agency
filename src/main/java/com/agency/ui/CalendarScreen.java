@@ -7,12 +7,16 @@ import com.agency.model.Trip;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.agency.ui.DashboardScreen.loadIcon;
 
 public class CalendarScreen {
 
@@ -63,8 +67,8 @@ public class CalendarScreen {
 
     private static HBox createControls() {
 
-        Button prev = new Button("‹");
-        Button next = new Button("›");
+        Button prev = new Button("",loadIcon("left.png",16));
+        Button next = new Button("",loadIcon("right.png",16));
         Button today = new Button("Today");
 
         monthBtn = new Button("Month");
@@ -226,7 +230,7 @@ public class CalendarScreen {
         Label label = new Label(text);
         label.setPrefSize(130, 42);
         label.setAlignment(Pos.CENTER);
-        label.getStyleClass().add("trip-header-text");
+        label.getStyleClass().add("calendar-day-header");
         return label;
     }
 
@@ -238,15 +242,18 @@ public class CalendarScreen {
 
         Label dateLabel = new Label(String.valueOf(date.getDayOfMonth()));
 
-        if (date.equals(LocalDate.now())) {
-            dateLabel.getStyleClass().add("calendar-today");
-        }
         dateLabel.setStyle("-fx-font-weight:bold;");
 
+        if (date.equals(selectedDate)) {
+            dateLabel.getStyleClass().add("calendar-selected");
+        } else if (date.equals(LocalDate.now())) {
+            dateLabel.getStyleClass().add("calendar-today");
+        }
         List<Trip> trips = getTripsByDate(date);
 
         if (!trips.isEmpty()) {
-            Label dot = new Label("●");
+            Circle dot = new Circle(2);
+            dot.setFill(Color.ORANGE);
             dot.getStyleClass().add("calendar-dot");
 
             Label count = new Label(trips.size() + " trip" + (trips.size() > 1 ? "s" : ""));
@@ -260,7 +267,7 @@ public class CalendarScreen {
         cell.setOnMouseClicked(e -> {
             selectedDate = date;
             currentMonth = YearMonth.from(date);
-            showTripsForDate(date);
+            refreshCalendar();
         });
 
         return cell;

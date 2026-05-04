@@ -26,6 +26,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.agency.ui.DashboardScreen.loadIcon;
+
 public class ClientsScreen {
 
     private static final int PAGE_SIZE = 8;
@@ -52,8 +54,7 @@ public class ClientsScreen {
 
         Label title = new Label("Clients");
         title.getStyleClass().add("client-title");
-
-        Button addBtn = new Button("+ Add New Client");
+        Button addBtn = new Button("Add New Client",loadIcon("plus.png",12));
         addBtn.getStyleClass().add("client-add-btn");
 
         Region spacer = new Region();
@@ -115,8 +116,8 @@ public class ClientsScreen {
 
         TableColumn<Client, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = createIconButton("/icons/edit.png", "✎", "edit-btn");
-            private final Button deleteBtn = createIconButton("/icons/delete.png", "🗑", "delete-btn");
+            private final Button editBtn = createIconButton("/icons/edit.png", "", "edit-btn");
+            private final Button deleteBtn = createIconButton("/icons/delete.png", "", "delete-btn");
             private final HBox box = new HBox(12, editBtn, deleteBtn);
 
             {
@@ -163,8 +164,9 @@ public class ClientsScreen {
 
         table.getColumns().addAll(idCol, nameCol, phoneCol, emailCol, cityCol, detailsCol, actionCol);
 
-        Button prevBtn = new Button("‹ Prev");
-        Button nextBtn = new Button("Next ›");
+        Button prevBtn = new Button("Prev",loadIcon("left.png",10));
+        Button nextBtn = new Button("Next",loadIcon("right.png",10));
+        nextBtn.setContentDisplay(ContentDisplay.RIGHT);
         Label pageInfo = new Label();
 
         prevBtn.getStyleClass().add("page-btn");
@@ -234,7 +236,7 @@ public class ClientsScreen {
     private static void showClientDetails(VBox root, Client client) {
         root.getChildren().clear();
 
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("Back",loadIcon("backArrow.png",12));
         backBtn.getStyleClass().add("back-btn");
 
         Label title = new Label("Client Details");
@@ -354,7 +356,7 @@ public class ClientsScreen {
 
         boolean isEdit = editClient != null;
 
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("Back",loadIcon("backArrow.png",12));
         backBtn.getStyleClass().add("back-btn");
 
         Label title = new Label(isEdit ? "Edit Client" : "Add New Client");

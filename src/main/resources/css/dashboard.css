@@ -451,4 +451,41 @@
 .dark-mode .report-card-value {
     -fx-text-fill: white;
 }
+.calendar-day-header {
+    -fx-background-color: #DBEAFE;
+    -fx-text-fill: #1E3A8A;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+}
 
+.calendar-cell {
+    -fx-background-color: white;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 8;
+}
+
+.calendar-cell:hover {
+    -fx-border-color: #2563EB;
+    -fx-background-color: #F8FAFF;
+}
+
+.calendar-today {
+    -fx-background-color: #166534;
+    -fx-text-fill: white;
+    -fx-background-radius: 50;
+    -fx-padding: 6 10;
+}
+
+.calendar-selected {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: white;
+    -fx-background-radius: 50;
+    -fx-padding: 6 10;
+}
+
+.calendar-dot {
+    -fx-fill: #F97316;
+}

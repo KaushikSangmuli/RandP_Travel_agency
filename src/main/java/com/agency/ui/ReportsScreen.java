@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 
+import javax.swing.text.html.ImageView;
 import java.util.List;
 
 public class ReportsScreen {
@@ -142,22 +143,89 @@ public class ReportsScreen {
         TableColumn<Trip, String> destCol = col("Destination", "destination");
         TableColumn<Trip, String> dateCol = col("Date", "date");
 
+        // ===== Revenue Column =====
         TableColumn<Trip, String> revenueCol = new TableColumn<>("Revenue");
         revenueCol.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleStringProperty(money(data.getValue().getSellValue())));
+                new javafx.beans.property.SimpleStringProperty(money(data.getValue().getSellValue()))
+        );
 
+        revenueCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String value, boolean empty) {
+                super.updateItem(value, empty);
+
+                if (empty || value == null) {
+                    setText(null);
+                } else {
+                    setText(value);
+                    setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold;");
+                }
+            }
+        });
+
+        // ===== Profit Column =====
         TableColumn<Trip, String> profitCol = new TableColumn<>("Profit");
         profitCol.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleStringProperty(money(data.getValue().getProfit())));
+                new javafx.beans.property.SimpleStringProperty(money(data.getValue().getProfit()))
+        );
 
-        TableColumn<Trip, String> statusCol = col("Status", "status");
+        profitCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String value, boolean empty) {
+                super.updateItem(value, empty);
+
+                if (empty || value == null) {
+                    setText(null);
+                } else {
+                    setText(value);
+                    setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+                }
+            }
+        });
+
+        // ===== Status Column (Badge Style) =====
+        TableColumn<Trip, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        statusCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+
+                if (empty || status == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    Label badge = new Label(status);
+
+                    badge.setStyle("""
+                    -fx-padding: 4 10;
+                    -fx-background-radius: 12;
+                    -fx-font-weight: bold;
+                """);
+
+                    switch (status.toLowerCase()) {
+                        case "confirmed" -> badge.setStyle(badge.getStyle() +
+                                "-fx-background-color: #DCFCE7; -fx-text-fill: #16A34A;");
+                        case "pending" -> badge.setStyle(badge.getStyle() +
+                                "-fx-background-color: #FEF3C7; -fx-text-fill: #D97706;");
+                        case "cancelled" -> badge.setStyle(badge.getStyle() +
+                                "-fx-background-color: #FEE2E2; -fx-text-fill: #DC2626;");
+                        default -> badge.setStyle(badge.getStyle() +
+                                "-fx-background-color: #E5E7EB; -fx-text-fill: #374151;");
+                    }
+
+                    setGraphic(badge);
+                    setText(null);
+                }
+            }
+        });
 
         table.getColumns().addAll(clientCol, destCol, dateCol, revenueCol, profitCol, statusCol);
         table.getItems().setAll(getTrips());
 
         return table;
     }
-
     private static TableColumn<Trip, String> col(String title, String property) {
         TableColumn<Trip, String> col = new TableColumn<>(title);
         col.setCellValueFactory(new PropertyValueFactory<>(property));
@@ -186,6 +254,6 @@ public class ReportsScreen {
     }
 
     private static String money(double amount) {
-        return "₹" + String.format("%.2f", amount);
+        return "Rs." + String.format("%.2f", amount);
     }
 }

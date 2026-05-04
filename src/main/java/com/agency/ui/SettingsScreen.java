@@ -1,12 +1,15 @@
 package com.agency.ui;
 
 import com.agency.backup.BackupData;
+import com.agency.backup.BackupTrip;
 import com.agency.backup.ClientWithTrips;
 import com.agency.db.ClientRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
@@ -16,13 +19,16 @@ import org.json.JSONObject;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;import com.agency.backup.BackupTrip;
+import java.util.List;
 import java.util.Properties;
+
+import static com.agency.ui.DashboardScreen.loadIcon;
 
 public class SettingsScreen {
 
     private static boolean dailyBackupEnabled = false;
     private static boolean notificationsEnabled = true;
+
     private static final File SETTINGS_FILE =
             new File(System.getProperty("user.home"), "kp_settings.properties");
 
@@ -33,7 +39,7 @@ public class SettingsScreen {
         Label title = new Label("Settings");
         title.getStyleClass().add("client-title");
 
-        VBox profile = card("👤 Profile Settings");
+        VBox profile = card("Profile Settings", loadIcon("profileSetting.png", 16));
 
         TextField name = input("Admin Name");
         TextField email = input("admin@email.com");
@@ -42,6 +48,7 @@ public class SettingsScreen {
         PasswordField loginPassword = new PasswordField();
         loginPassword.setPromptText("Login Password");
         loginPassword.getStyleClass().add("client-input");
+
         Properties savedProfile = loadProfileData();
 
         name.setText(savedProfile.getProperty("admin.name", ""));
@@ -53,6 +60,7 @@ public class SettingsScreen {
 
         Button saveProfile = new Button("Save Profile");
         saveProfile.getStyleClass().add("view-all-btn");
+
         saveProfile.setOnAction(e -> {
             String enteredName = name.getText();
             String enteredEmail = email.getText();
@@ -86,7 +94,6 @@ public class SettingsScreen {
             alert("Profile and login credentials updated successfully");
         });
 
-
         profile.getChildren().addAll(
                 name,
                 email,
@@ -95,14 +102,10 @@ public class SettingsScreen {
                 saveProfile
         );
 
-        VBox app = card("⚙ App Settings");
-
+        VBox app = card("App Settings", loadIcon("appSetting.png", 16));
 
         CheckBox notifications = toggle(notificationsEnabled);
-
-
         HBox notificationRow = toggleRow("Enable Notifications", notifications);
-
 
         notifications.setOnAction(e -> {
             notificationsEnabled = notifications.isSelected();
@@ -111,7 +114,7 @@ public class SettingsScreen {
 
         app.getChildren().addAll(notificationRow);
 
-        VBox backup = card("💾 Backup & Data");
+        VBox backup = card("Backup & Data", loadIcon("backupSetting.png", 16));
 
         Properties settings = loadProfileData();
 
@@ -159,7 +162,8 @@ public class SettingsScreen {
 
         backup.getChildren().addAll(dailyBackupRow, backupBtn, restoreBtn);
 
-        VBox info = card("ℹ App Info");
+        VBox info = card("App Info", loadIcon("information.png", 16));
+
         info.getChildren().addAll(
                 new Label("Version: 1.0.0"),
                 new Label("Company: KP Tours & Travels"),
@@ -347,6 +351,7 @@ public class SettingsScreen {
     private static String safe(String value) {
         return value == null ? "" : value.replace("|", " ");
     }
+
     private static void saveProfileData(String name, String email, String username, String password) {
         try {
             Properties props = loadProfileData();
@@ -381,6 +386,7 @@ public class SettingsScreen {
 
         return props;
     }
+
     public static void runDailyBackupIfNeeded() {
         try {
             Properties props = loadProfileData();
@@ -486,14 +492,18 @@ public class SettingsScreen {
             return false;
         }
     }
-    private static VBox card(String heading) {
+
+    private static VBox card(String heading, Node icon) {
         VBox box = new VBox(14);
         box.getStyleClass().add("panel");
 
         Label title = new Label(heading);
         title.getStyleClass().add("section-title");
 
-        box.getChildren().add(title);
+        HBox header = new HBox(8, icon, title);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        box.getChildren().add(header);
         return box;
     }
 
@@ -507,7 +517,7 @@ public class SettingsScreen {
     private static HBox toggleRow(String text, CheckBox toggle) {
         Label label = new Label(text);
         HBox row = new HBox(12, label, toggle);
-        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        row.setAlignment(Pos.CENTER_LEFT);
         return row;
     }
 
@@ -523,6 +533,7 @@ public class SettingsScreen {
         alert.setContentText(msg);
         alert.showAndWait();
     }
+
     public static String getLoginUsername() {
         Properties props = loadProfileData();
         return props.getProperty("login.username", "admin");

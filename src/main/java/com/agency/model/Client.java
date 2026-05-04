@@ -5,7 +5,7 @@ import javafx.beans.property.StringProperty;
 
 public class Client {
 
-    private int id; // ❗ removed final (important)
+    private int id; //  removed final (important)
 
     private final StringProperty name;
     private final StringProperty phone;
