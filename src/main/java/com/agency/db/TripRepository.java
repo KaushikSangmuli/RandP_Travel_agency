@@ -11,8 +11,8 @@ public class TripRepository {
     // CREATE
     public static void addTrip(Trip t) {
         String sql = "INSERT INTO trips " +
-                "(client_id, client_name, destination, date, type, status, airline_name, purchase_value, sell_value, document_path, service_fee) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(client_id, client_name, destination, date, type, status, airline_name, purchase_value, sell_value, service_fee) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

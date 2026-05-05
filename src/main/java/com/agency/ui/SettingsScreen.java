@@ -7,6 +7,7 @@ import com.agency.db.ClientRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
+import com.agency.util.AppLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -186,7 +187,7 @@ public class SettingsScreen {
 
     private static void createBackup() {
         try {
-            File dir = new File(System.getProperty("user.home") + "/KP_BACKUP");
+            File dir = new File(System.getProperty("user.home") + "/KP_BACKUP_DB");
 
             if (!dir.exists()) {
                 dir.mkdirs();
@@ -255,7 +256,7 @@ public class SettingsScreen {
             alert("Backup saved successfully:\n" + backupFile.getAbsolutePath());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e , "Restore Failed.");
             alert("Backup failed");
         }
     }
@@ -269,7 +270,7 @@ public class SettingsScreen {
                     new FileChooser.ExtensionFilter("JSON Files", "*.json")
             );
 
-            File defaultDir = new File(System.getProperty("user.home") + "/KP_BACKUP");
+            File defaultDir = new File(System.getProperty("user.home") + "/KP_BACKUP_DB");
 
             if (defaultDir.exists()) {
                 chooser.setInitialDirectory(defaultDir);
@@ -335,7 +336,7 @@ public class SettingsScreen {
             alert("Restore completed successfully");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e , "Restore Failed");
             alert("Restore failed");
         }
     }
@@ -366,7 +367,7 @@ public class SettingsScreen {
             out.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+          AppLogger.logError(e, "Failed to save Profile");
             alert("Failed to save profile");
         }
     }
@@ -381,7 +382,7 @@ public class SettingsScreen {
                 in.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+           AppLogger.logError(e, "Failed at Load Profile Data");
         }
 
         return props;
@@ -413,7 +414,7 @@ public class SettingsScreen {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+           AppLogger.logError(e, "Daily Backup Failed..");
         }
     }
 
@@ -488,7 +489,7 @@ public class SettingsScreen {
             return true;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at silently creating backup");
             return false;
         }
     }

@@ -7,7 +7,9 @@ import java.sql.SQLException;
 
 public class DBConnection {
 
-    private static final String DB_DIR = "data";
+
+    private static final String DB_DIR =
+            System.getProperty("user.home") + "/KP_Tours_Data";
     private static final String DB_URL = "jdbc:sqlite:" + DB_DIR + "/agency.db";
 
 //    private static Connection connection;

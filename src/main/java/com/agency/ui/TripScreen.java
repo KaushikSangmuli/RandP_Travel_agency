@@ -6,6 +6,7 @@ import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Document;
 import com.agency.model.Trip;
+import com.agency.util.AppLogger;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -370,6 +371,7 @@ public class TripScreen {
                     try {
                         Desktop.getDesktop().open(file);
                     } catch (Exception ex) {
+                        AppLogger.logError(ex , "Failed while opening file.");
                         alert("Cannot open file");
                     }
                 });
@@ -684,6 +686,7 @@ public class TripScreen {
         try {
             return Double.parseDouble(value.trim());
         } catch (Exception e) {
+            AppLogger.logError(e, "Parse amount method Failed... for value = "+ value);
             return 0;
         }
     }

@@ -4,6 +4,7 @@ import com.agency.db.DocumentRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Document;
 import com.agency.model.Trip;
+import com.agency.util.AppLogger;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -205,7 +206,7 @@ public class DocumentScreen {
             alert("Document uploaded successfully");
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            AppLogger.logError(ex, "Failed while Uploading the Document");
             alert("Failed to save document");
         }
     }
@@ -276,6 +277,7 @@ public class DocumentScreen {
             try {
                 Desktop.getDesktop().open(file);
             } catch (Exception ex) {
+                AppLogger.logError(ex, "Failed while adding a row.");
                 alert("Cannot open file");
             }
         });

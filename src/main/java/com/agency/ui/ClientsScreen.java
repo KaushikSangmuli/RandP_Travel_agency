@@ -6,6 +6,7 @@ import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Document;
 import com.agency.model.Trip;
+import com.agency.util.AppLogger;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -329,6 +330,7 @@ public class ClientsScreen {
                     try {
                         Desktop.getDesktop().open(file);
                     } catch (Exception ex) {
+                        AppLogger.logError(ex, "Failed at Show Client Details." );
                         alert("Cannot open file");
                     }
                 });
