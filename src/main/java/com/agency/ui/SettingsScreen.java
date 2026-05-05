@@ -8,6 +8,7 @@ import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
 import com.agency.util.AppLogger;
+import com.agency.util.DataProcessLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -253,6 +254,18 @@ public class SettingsScreen {
             writer.write(root.toString(4));
             writer.close();
 
+            int clientCount = clients.size();
+
+            int tripCount = clients.stream()
+                    .mapToInt(c -> TripRepository.getTripsByClientId(c.getId()).size())
+                    .sum();
+
+            DataProcessLogger.logBackup(
+                    clientCount,
+                    tripCount,
+                    backupFile.getAbsolutePath()
+            );
+
             alert("Backup saved successfully:\n" + backupFile.getAbsolutePath());
 
         } catch (Exception e) {
@@ -262,6 +275,8 @@ public class SettingsScreen {
     }
 
     private static void restoreBackup() {
+        File selectedFile = null;
+
         try {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Backup File");
@@ -276,15 +291,15 @@ public class SettingsScreen {
                 chooser.setInitialDirectory(defaultDir);
             }
 
-            File file = chooser.showOpenDialog(null);
+            selectedFile = chooser.showOpenDialog(null);
 
-            if (file == null) {
+            if (selectedFile == null) {
                 alert("No file selected");
                 return;
             }
 
             ObjectMapper mapper = new ObjectMapper();
-            BackupData data = mapper.readValue(file, BackupData.class);
+            BackupData data = mapper.readValue(selectedFile, BackupData.class);
 
             if (data == null || data.clients == null) {
                 alert("Invalid backup file");
@@ -332,6 +347,19 @@ public class SettingsScreen {
                     }
                 }
             }
+
+            int clientCount = data.clients.size();
+
+            int tripCount = data.clients.stream()
+                    .mapToInt(c -> c.trips == null ? 0 : c.trips.size())
+                    .sum();
+
+            DataProcessLogger.logRestore(
+                    clientCount,
+                    tripCount,
+                    selectedFile.getAbsolutePath(),
+                    true
+            );
 
             alert("Restore completed successfully");
 
