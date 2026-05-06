@@ -199,7 +199,16 @@ public class DocumentScreen {
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING
             );
 
-            DocumentRepository.addDocument(selectedTrip.getId(), destFile.getAbsolutePath());
+            Document doc = new Document(
+                    0,
+                    selectedTrip.getUuid(),
+                    selectedTrip.getClientUuid(),
+                    destFile.getAbsolutePath(),
+                    "TRIP",
+                    "DOCUMENT"
+            );
+
+            DocumentRepository.addDocument(doc);
 
             refreshList();
             alert("Document uploaded successfully");
@@ -219,7 +228,7 @@ public class DocumentScreen {
             List<Trip> trips = TripRepository.getAllTrips();
 
             for (Trip t : trips) {
-                List<Document> docs = DocumentRepository.getDocumentsByTrip(t.getId());
+                List<Document> docs = DocumentRepository.getDocumentsByTripUuid(t.getUuid());
 
                 for (Document doc : docs) {
                     addRow(t, doc);
@@ -228,7 +237,7 @@ public class DocumentScreen {
             }
 
         } else {
-            List<Document> docs = DocumentRepository.getDocumentsByTrip(selectedTrip.getId());
+            List<Document> docs = DocumentRepository.getDocumentsByClientUuid(selectedTrip.getUuid());
 
             for (Document doc : docs) {
                 addRow(null, doc);

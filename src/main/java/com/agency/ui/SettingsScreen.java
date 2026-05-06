@@ -4,6 +4,7 @@ import com.agency.backup.BackupData;
 import com.agency.backup.BackupTrip;
 import com.agency.backup.ClientWithTrips;
 import com.agency.db.ClientRepository;
+import com.agency.db.DBConnection;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
@@ -17,6 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -187,70 +189,20 @@ public class SettingsScreen {
     private static void createBackup() {
         try {
             File dir = new File(System.getProperty("user.home") + "/KP_BACKUP");
-
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            if (!dir.exists()) dir.mkdirs();
 
             LocalDateTime now = LocalDateTime.now();
-
-            String fileName = String.format(
-                    "%02d_%02d_%d_%02d_%02d_%02d_backup.json",
-                    now.getDayOfMonth(),
-                    now.getMonthValue(),
-                    now.getYear(),
-                    now.getHour(),
-                    now.getMinute(),
-                    now.getSecond()
-            );
+            String fileName = String.format("%02d_%02d_%d_%02d_%02d_%02d_backup.json",
+                    now.getDayOfMonth(), now.getMonthValue(), now.getYear(),
+                    now.getHour(), now.getMinute(), now.getSecond());
 
             File backupFile = new File(dir, fileName);
 
-            JSONObject root = new JSONObject();
-            JSONArray clientsArray = new JSONArray();
+            JSONObject root = buildBackupJson();
 
-            List<Client> clients = ClientRepository.getAllClients();
-
-            for (Client c : clients) {
-                JSONObject clientJson = new JSONObject();
-
-                clientJson.put("id", c.getId());
-                clientJson.put("name", safe(c.getName()));
-                clientJson.put("phone", safe(c.getPhone()));
-                clientJson.put("email", safe(c.getEmail()));
-                clientJson.put("city", safe(c.getCity()));
-
-                JSONArray tripsArray = new JSONArray();
-
-                List<Trip> trips = TripRepository.getTripsByClientId(c.getId());
-
-                for (Trip t : trips) {
-                    JSONObject tripJson = new JSONObject();
-
-                    tripJson.put("id", t.getId());
-                    tripJson.put("clientId", t.getClientId());
-                    tripJson.put("clientName", safe(t.getClientName()));
-                    tripJson.put("destination", safe(t.getDestination()));
-                    tripJson.put("date", safe(t.getDate()));
-                    tripJson.put("type", safe(t.getType()));
-                    tripJson.put("status", safe(t.getStatus()));
-                    tripJson.put("purchaseValue", t.getPurchaseValue());
-                    tripJson.put("sellValue", t.getSellValue());
-                    tripJson.put("airlineName", safe(t.getAirlineName()));
-                    tripJson.put("serviceFee", t.getServiceFee());
-
-                    tripsArray.put(tripJson);
-                }
-
-                clientJson.put("trips", tripsArray);
-                clientsArray.put(clientJson);
+            try (FileWriter writer = new FileWriter(backupFile)) {
+                writer.write(root.toString(4));
             }
-
-            root.put("clients", clientsArray);
-
-            FileWriter writer = new FileWriter(backupFile);
-            writer.write(root.toString(4));
-            writer.close();
 
             alert("Backup saved successfully:\n" + backupFile.getAbsolutePath());
 
@@ -259,50 +211,77 @@ public class SettingsScreen {
             alert("Backup failed");
         }
     }
+    private static JSONObject buildBackupJson() {
+        JSONObject root = new JSONObject();
+        JSONArray clientsArray = new JSONArray();
 
+        List<Client> clients = ClientRepository.getAllClients();
+
+        for (Client c : clients) {
+            JSONObject clientJson = new JSONObject();
+
+            clientJson.put("id", c.getId());
+            clientJson.put("uuid", c.getUuid());
+            clientJson.put("name", safe(c.getName()));
+            clientJson.put("phone", safe(c.getPhone()));
+            clientJson.put("email", safe(c.getEmail()));
+            clientJson.put("city", safe(c.getCity()));
+
+            JSONArray tripsArray = new JSONArray();
+
+            List<Trip> trips = TripRepository.getTripsByClientUuid(c.getUuid());
+
+            for (Trip t : trips) {
+                JSONObject tripJson = new JSONObject();
+
+                tripJson.put("id", t.getId());
+                tripJson.put("uuid", t.getUuid());
+                tripJson.put("clientUuid", t.getClientUuid());
+                tripJson.put("clientId", t.getClientId());
+                tripJson.put("clientName", safe(t.getClientName()));
+                tripJson.put("destination", safe(t.getDestination()));
+                tripJson.put("date", safe(t.getDate()));
+                tripJson.put("type", safe(t.getType()));
+                tripJson.put("status", safe(t.getStatus()));
+                tripJson.put("purchaseValue", t.getPurchaseValue());
+                tripJson.put("sellValue", t.getSellValue());
+                tripJson.put("airlineName", safe(t.getAirlineName()));
+                tripJson.put("serviceFee", t.getServiceFee());
+
+                tripsArray.put(tripJson);
+            }
+
+            clientJson.put("trips", tripsArray);
+            clientsArray.put(clientJson);
+        }
+
+        root.put("clients", clientsArray);
+        return root;
+    }
     private static void restoreBackup() {
+        Connection conn = null;
+
         try {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Backup File");
-
-            chooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("JSON Files", "*.json")
-            );
-
-            File defaultDir = new File(System.getProperty("user.home") + "/KP_BACKUP");
-
-            if (defaultDir.exists()) {
-                chooser.setInitialDirectory(defaultDir);
-            }
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
 
             File file = chooser.showOpenDialog(null);
-
-            if (file == null) {
-                alert("No file selected");
-                return;
-            }
+            if (file == null) return;
 
             ObjectMapper mapper = new ObjectMapper();
             BackupData data = mapper.readValue(file, BackupData.class);
 
-            if (data == null || data.clients == null) {
-                alert("Invalid backup file");
-                return;
-            }
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false); // 🔥 START TRANSACTION
 
             for (ClientWithTrips c : data.clients) {
-                Client client = new Client(
-                        c.id,
-                        c.name,
-                        c.phone,
-                        c.email,
-                        c.city
-                );
 
-                if (ClientRepository.existsById(c.id)) {
-                    ClientRepository.updateClient(client);
-                } else {
-                    ClientRepository.addClientWithId(client);
+                Client client = new Client(c.id, c.name, c.phone, c.email, c.city);
+                client.setUuid(c.uuid);
+
+                if (!ClientRepository.existsByUuid(conn, c.uuid)) {
+                    ClientRepository.addClient(conn, client);
                 }
 
                 if (c.trips != null) {
@@ -310,6 +289,7 @@ public class SettingsScreen {
 
                         Trip trip = new Trip(
                                 bt.clientId,
+                                bt.clientUuid,
                                 bt.clientName,
                                 bt.destination,
                                 bt.date,
@@ -321,22 +301,34 @@ public class SettingsScreen {
                                 bt.serviceFee
                         );
 
-                        trip.setId(bt.id);
+                        trip.setUuid(bt.uuid);
 
-                        if (TripRepository.existsById(bt.id)) {
-                            TripRepository.updateTrip(bt.id, trip);
-                        } else {
-                            TripRepository.addTripWithId(trip);
+                        if (!TripRepository.existsByUuid(conn, bt.uuid)) {
+                            TripRepository.addTrip(conn, trip);
                         }
                     }
                 }
             }
 
+            conn.commit(); // ✅ SUCCESS → SAVE ALL
             alert("Restore completed successfully");
 
         } catch (Exception e) {
+            try {
+                if (conn != null) conn.rollback(); // ❌ FAIL → UNDO ALL
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
             e.printStackTrace();
             alert("Restore failed");
+
+        } finally {
+            try {
+                if (conn != null) conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -420,70 +412,20 @@ public class SettingsScreen {
     private static boolean createBackupSilently() {
         try {
             File dir = new File(System.getProperty("user.home") + "/KP_BACKUP");
-
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            if (!dir.exists()) dir.mkdirs();
 
             LocalDateTime now = LocalDateTime.now();
-
-            String fileName = String.format(
-                    "%02d_%02d_%d_%02d_%02d_%02d_auto_backup.json",
-                    now.getDayOfMonth(),
-                    now.getMonthValue(),
-                    now.getYear(),
-                    now.getHour(),
-                    now.getMinute(),
-                    now.getSecond()
-            );
+            String fileName = String.format("%02d_%02d_%d_%02d_%02d_%02d_auto_backup.json",
+                    now.getDayOfMonth(), now.getMonthValue(), now.getYear(),
+                    now.getHour(), now.getMinute(), now.getSecond());
 
             File backupFile = new File(dir, fileName);
 
-            JSONObject root = new JSONObject();
-            JSONArray clientsArray = new JSONArray();
+            JSONObject root = buildBackupJson();
 
-            List<Client> clients = ClientRepository.getAllClients();
-
-            for (Client c : clients) {
-                JSONObject clientJson = new JSONObject();
-
-                clientJson.put("id", c.getId());
-                clientJson.put("name", safe(c.getName()));
-                clientJson.put("phone", safe(c.getPhone()));
-                clientJson.put("email", safe(c.getEmail()));
-                clientJson.put("city", safe(c.getCity()));
-
-                JSONArray tripsArray = new JSONArray();
-
-                List<Trip> trips = TripRepository.getTripsByClientId(c.getId());
-
-                for (Trip t : trips) {
-                    JSONObject tripJson = new JSONObject();
-
-                    tripJson.put("id", t.getId());
-                    tripJson.put("clientId", t.getClientId());
-                    tripJson.put("clientName", safe(t.getClientName()));
-                    tripJson.put("destination", safe(t.getDestination()));
-                    tripJson.put("date", safe(t.getDate()));
-                    tripJson.put("type", safe(t.getType()));
-                    tripJson.put("status", safe(t.getStatus()));
-                    tripJson.put("purchaseValue", t.getPurchaseValue());
-                    tripJson.put("sellValue", t.getSellValue());
-                    tripJson.put("airlineName", safe(t.getAirlineName()));
-                    tripJson.put("serviceFee", t.getServiceFee());
-
-                    tripsArray.put(tripJson);
-                }
-
-                clientJson.put("trips", tripsArray);
-                clientsArray.put(clientJson);
+            try (FileWriter writer = new FileWriter(backupFile)) {
+                writer.write(root.toString(4));
             }
-
-            root.put("clients", clientsArray);
-
-            FileWriter writer = new FileWriter(backupFile);
-            writer.write(root.toString(4));
-            writer.close();
 
             return true;
 

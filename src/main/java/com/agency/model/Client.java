@@ -1,7 +1,8 @@
 package com.agency.model;
 
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.StringProperty;import java.util.UUID;
+
 
 public class Client {
 
@@ -11,9 +12,11 @@ public class Client {
     private final StringProperty phone;
     private final StringProperty email;
     private final StringProperty city;
+    private String uuid;
 
     public Client(int id, String name, String phone, String email, String city) {
         this.id = id;
+        this.uuid = UUID.randomUUID().toString();
         this.name = new SimpleStringProperty(name);
         this.phone = new SimpleStringProperty(phone);
         this.email = new SimpleStringProperty(email);
@@ -40,6 +43,9 @@ public class Client {
     public String getCity() {
         return city.get();
     }
+    public String getUuid() { return uuid; }
+
+    public void setUuid(String uuid) { this.uuid = uuid;  }
 
     public void setId(int id) {
         this.id = id;

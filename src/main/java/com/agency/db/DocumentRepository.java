@@ -1,56 +1,78 @@
 package com.agency.db;
 
 import com.agency.model.Document;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentRepository {
 
-    // CREATE
-    public static void addDocument(int tripId, String filePath) {
-        String sql = "INSERT INTO documents (trip_id, file_path) VALUES (?, ?)";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            ps.setInt(1, tripId);
-            ps.setString(2, filePath);
-
-            ps.executeUpdate();
-
-            // optional: if you want generated id later
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    int id = rs.getInt(1);
-                    // you can use it if needed
-                }
-            }
-
+    // ================= NORMAL (UI USE) =================
+    public static void addDocument(Document d) {
+        try (Connection conn = DBConnection.getConnection()) {
+            addDocument(conn, d);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // READ BY TRIP
-    public static List<Document> getDocumentsByTrip(int tripId) {
-        List<Document> list = new ArrayList<>();
+    // ================= TRANSACTION (RESTORE USE) =================
+    public static void addDocument(Connection conn, Document d) throws SQLException {
+        String sql = "INSERT INTO documents " +
+                "(uuid, trip_uuid, client_uuid, file_path, type, sub_type) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
-        String sql = "SELECT * FROM documents WHERE trip_id=? ORDER BY id DESC";
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, d.getUuid());
+            ps.setString(2, d.getTripUuid());
+            ps.setString(3, d.getClientUuid());
+            ps.setString(4, d.getFilePath());
+            ps.setString(5, d.getType());
+            ps.setString(6, d.getSubType());
+
+            ps.executeUpdate();
+
+            // set generated ID back
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    d.setId(rs.getInt(1));
+                }
+            }
+        }
+    }
+
+    // ================= EXISTS =================
+    public static boolean existsByUuid(Connection conn, String uuid) throws SQLException {
+        String sql = "SELECT 1 FROM documents WHERE uuid=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            return ps.executeQuery().next();
+        }
+    }
+
+    public static boolean existsByUuid(String uuid) {
+        try (Connection conn = DBConnection.getConnection()) {
+            return existsByUuid(conn, uuid);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ================= READ BY TRIP UUID =================
+    public static List<Document> getDocumentsByTripUuid(String tripUuid) {
+        List<Document> list = new ArrayList<>();
+        String sql = "SELECT * FROM documents WHERE trip_uuid=? ORDER BY id DESC";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, tripId);
+            ps.setString(1, tripUuid);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(new Document(
-                            rs.getInt("id"),
-                            rs.getInt("trip_id"),
-                            rs.getString("file_path")
-                    ));
+                    list.add(mapDocument(rs));
                 }
             }
 
@@ -61,10 +83,32 @@ public class DocumentRepository {
         return list;
     }
 
-    // READ ALL (useful for reports / admin)
+    // ================= READ BY CLIENT UUID =================
+    public static List<Document> getDocumentsByClientUuid(String clientUuid) {
+        List<Document> list = new ArrayList<>();
+        String sql = "SELECT * FROM documents WHERE client_uuid=? ORDER BY id DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, clientUuid);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapDocument(rs));
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    // ================= READ ALL =================
     public static List<Document> getAllDocuments() {
         List<Document> list = new ArrayList<>();
-
         String sql = "SELECT * FROM documents ORDER BY id DESC";
 
         try (Connection conn = DBConnection.getConnection();
@@ -72,11 +116,7 @@ public class DocumentRepository {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                list.add(new Document(
-                        rs.getInt("id"),
-                        rs.getInt("trip_id"),
-                        rs.getString("file_path")
-                ));
+                list.add(mapDocument(rs));
             }
 
         } catch (Exception e) {
@@ -86,7 +126,7 @@ public class DocumentRepository {
         return list;
     }
 
-    // READ BY ID
+    // ================= READ BY ID =================
     public static Document getDocumentById(int id) {
         String sql = "SELECT * FROM documents WHERE id=?";
 
@@ -97,11 +137,7 @@ public class DocumentRepository {
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Document(
-                            rs.getInt("id"),
-                            rs.getInt("trip_id"),
-                            rs.getString("file_path")
-                    );
+                    return mapDocument(rs);
                 }
             }
 
@@ -112,7 +148,7 @@ public class DocumentRepository {
         return null;
     }
 
-    // DELETE
+    // ================= DELETE =================
     public static void deleteDocument(int id) {
         String sql = "DELETE FROM documents WHERE id=?";
 
@@ -125,5 +161,20 @@ public class DocumentRepository {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // ================= MAPPER =================
+    private static Document mapDocument(ResultSet rs) throws SQLException {
+        Document d = new Document(
+                rs.getInt("id"),
+                rs.getString("trip_uuid"),
+                rs.getString("client_uuid"),
+                rs.getString("file_path"),
+                rs.getString("type"),
+                rs.getString("sub_type")
+        );
+
+        d.setUuid(rs.getString("uuid"));
+        return d;
     }
 }

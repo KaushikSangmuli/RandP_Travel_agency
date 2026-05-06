@@ -147,7 +147,7 @@ public class ClientsScreen {
 
                     confirm.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
-                            ClientRepository.deleteClient(client.getId());
+                            ClientRepository.deleteClient(client.getUuid());
                             showClientList(root);
                         }
                     });
@@ -309,7 +309,7 @@ public class ClientsScreen {
 
         for (Trip t : trips) {
             if (t.getClientId() == client.getId()) {
-                allDocs.addAll(DocumentRepository.getDocumentsByTrip(t.getId()));
+                allDocs.addAll(DocumentRepository.getDocumentsByTripUuid(t.getUuid()));
             }
         }
 

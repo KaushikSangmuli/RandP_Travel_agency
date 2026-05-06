@@ -353,7 +353,7 @@ public class TripScreen {
         section4.getStyleClass().add("section-title");
 
         VBox docsBox = new VBox(8);
-        List<Document> documents = DocumentRepository.getDocumentsByTrip(trip.getId());
+        List<Document> documents = DocumentRepository.getDocumentsByTripUuid(trip.getUuid());
 
         if (documents.isEmpty()) {
             docsBox.getChildren().add(new Label("No documents uploaded yet"));
@@ -646,6 +646,7 @@ public class TripScreen {
 
             Trip newTrip = new Trip(
                     selectedClient.getId(),
+                    selectedClient.getUuid(),
                     safe(selectedClient.getName()),
                     destination.getText().trim(),
                     date.getValue().toString(),

@@ -10,6 +10,7 @@ public class DBInit {
         String clientsTable =
                 "CREATE TABLE IF NOT EXISTS clients (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        "uuid TEXT UNIQUE NOT NULL," +
                         "name TEXT NOT NULL," +
                         "phone TEXT NOT NULL," +
                         "email TEXT," +
@@ -19,7 +20,9 @@ public class DBInit {
         String tripsTable =
                 "CREATE TABLE IF NOT EXISTS trips (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "client_id INTEGER NOT NULL," +
+                        "uuid TEXT UNIQUE NOT NULL," +
+                        "client_uuid TEXT NOT NULL," +
+                        "client_id INTEGER," + // UI only
                         "client_name TEXT," +
                         "destination TEXT," +
                         "date TEXT," +
@@ -28,14 +31,18 @@ public class DBInit {
                         "airline_name TEXT," +
                         "purchase_value REAL," +
                         "sell_value REAL," +
-                        "service_fee REAL" +   // ✅ FIXED (removed comma)
+                        "service_fee REAL" +
                         ");";
 
         String documentsTable =
                 "CREATE TABLE IF NOT EXISTS documents (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "trip_id INTEGER NOT NULL," +
-                        "file_path TEXT" +
+                        "uuid TEXT UNIQUE NOT NULL," +
+                        "trip_uuid TEXT," +
+                        "client_uuid TEXT," +
+                        "file_path TEXT," +
+                        "type TEXT," +
+                        "sub_type TEXT" +
                         ");";
 
         try (Connection conn = DBConnection.getConnection();

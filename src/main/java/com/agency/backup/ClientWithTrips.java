@@ -4,8 +4,9 @@ import com.agency.model.Trip;
 import java.util.List;
 
 public class ClientWithTrips {
+    public int id; // UI/internal only
+    public String uuid;
 
-    public int id;
     public String name;
     public String phone;
     public String email;

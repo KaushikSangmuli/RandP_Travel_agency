@@ -1,5 +1,7 @@
 package com.agency.model;
 
+import java.util.UUID;
+
 public class Trip {
 
     private int id;
@@ -13,12 +15,16 @@ public class Trip {
     private double sellValue;
     private String airlineName;
     private double serviceFee;
+    private String uuid;
+    private String clientUuid;
 
-    public Trip(int clientId, String clientName, String destination, String date, String type,
-                String status, double purchaseValue, double sellValue,
-                String airlineName,  double serviceFee) {
+    public Trip(int clientId, String clientUuid, String clientName, String destination, String date,
+                String type, String status, double purchaseValue, double sellValue,
+                String airlineName, double serviceFee) {
 
+        this.uuid = UUID.randomUUID().toString();
         this.clientId = clientId;
+        this.clientUuid = clientUuid;
         this.clientName = clientName;
         this.destination = destination;
         this.date = date;
@@ -42,8 +48,9 @@ public class Trip {
     public double getPurchaseValue() { return purchaseValue; }
     public double getSellValue() { return sellValue; }
     public String getAirlineName() { return airlineName; }
-
     public double getServiceFee() { return serviceFee; }
+    public String getUuid() { return uuid; }
+    public String getClientUuid() { return clientUuid; }
 
     // ================= SETTERS =================
 
@@ -55,7 +62,8 @@ public class Trip {
     public void setPurchaseValue(double purchaseValue) { this.purchaseValue = purchaseValue; }
     public void setSellValue(double sellValue) { this.sellValue = sellValue; }
     public void setAirlineName(String airlineName) { this.airlineName = airlineName; }
-
+    public void setUuid(String uuid) { this.uuid = uuid; }
+    public void setClientUuid(String clientUuid) { this.clientUuid = clientUuid; }
     public void setServiceFee(double serviceFee) { this.serviceFee = serviceFee; }
 
     // ================= BUSINESS LOGIC =================

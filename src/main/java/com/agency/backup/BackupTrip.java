@@ -1,8 +1,11 @@
 package com.agency.backup;
 
 public class BackupTrip {
-    public int id;
-    public int clientId;
+    public int id; // UI/internal only
+    public String uuid;
+    public String clientUuid;
+
+    public int clientId; // UI only
     public String clientName;
     public String destination;
     public String date;
