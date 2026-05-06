@@ -4,6 +4,7 @@ import com.agency.db.ClientRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
+import com.agency.util.AppLogger;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -428,6 +429,7 @@ public class DashboardScreen {
         try {
             return date == null || date.isEmpty() ? null : LocalDate.parse(date);
         } catch (Exception e) {
+            AppLogger.logError(e, "Failed while Parsing the date = "+ date);
             return null;
         }
     }

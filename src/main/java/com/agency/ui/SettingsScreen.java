@@ -189,7 +189,10 @@ public class SettingsScreen {
     private static void createBackup() {
         try {
             File dir = new File(System.getProperty("user.home") + "/KP_BACKUP");
-            if (!dir.exists()) dir.mkdirs();
+
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
 
             LocalDateTime now = LocalDateTime.now();
             String fileName = String.format("%02d_%02d_%d_%02d_%02d_%02d_backup.json",
@@ -255,19 +258,40 @@ public class SettingsScreen {
             clientsArray.put(clientJson);
         }
 
-        root.put("clients", clientsArray);
-        return root;
+            root.put("clients", clientsArray);
+
+            FileWriter writer = new FileWriter(backupFile);
+            writer.write(root.toString(4));
+            writer.close();
+
+            alert("Backup saved successfully:\n" + backupFile.getAbsolutePath());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            alert("Backup failed");
+        }
     }
     private static void restoreBackup() {
-        Connection conn = null;
-
         try {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Backup File");
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("JSON Files", "*.json")
+            );
+
+            File defaultDir = new File(System.getProperty("user.home") + "/KP_BACKUP");
+
+            if (defaultDir.exists()) {
+                chooser.setInitialDirectory(defaultDir);
+            }
 
             File file = chooser.showOpenDialog(null);
-            if (file == null) return;
+
+            if (file == null) {
+                alert("No file selected");
+                return;
+            }
 
             ObjectMapper mapper = new ObjectMapper();
             BackupData data = mapper.readValue(file, BackupData.class);
@@ -310,16 +334,9 @@ public class SettingsScreen {
                 }
             }
 
-            conn.commit(); // ✅ SUCCESS → SAVE ALL
             alert("Restore completed successfully");
 
         } catch (Exception e) {
-            try {
-                if (conn != null) conn.rollback(); // ❌ FAIL → UNDO ALL
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
             e.printStackTrace();
             alert("Restore failed");
 
