@@ -1,5 +1,6 @@
 package com.agency.ui;
 
+import com.agency.cache.AppCache;
 import com.agency.db.ClientRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
@@ -205,9 +206,10 @@ public class DashboardScreen {
         content.getChildren().addAll(title, cards, mainArea);
     }
 
+
     private static void refreshCache() {
-        cachedClients = ClientRepository.getAllClients();
-        cachedTrips = TripRepository.getAllTrips();
+        cachedClients = AppCache.getClients();
+        cachedTrips = AppCache.getTrips();
     }
 
     private static VBox createUpcomingTripsPanel() {
@@ -304,7 +306,7 @@ public class DashboardScreen {
                 trip.getDestination(),
                 trip.getType(),
                 trip.getStatus(),
-                getClientPhone(trip.getClientId()),
+                getClientPhone(trip.getClientUuid()),
                 "View",
                 false,
                 trip
@@ -441,8 +443,12 @@ public class DashboardScreen {
                 .orElseGet(() -> ClientRepository.getClientById(clientId));
     }
 
-    private static String getClientPhone(int clientId) {
-        Client client = getClientById(clientId);
+    private static String getClientPhone(String clientUuid) {
+        Client client = AppCache.getClients().stream()
+                .filter(c -> clientUuid != null && clientUuid.equals(c.getUuid()))
+                .findFirst()
+                .orElse(null);
+
         return client == null ? "-" : client.getPhone();
     }
 

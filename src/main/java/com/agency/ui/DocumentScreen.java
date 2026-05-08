@@ -1,5 +1,6 @@
 package com.agency.ui;
 
+import com.agency.cache.AppCache;
 import com.agency.db.DocumentRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Document;
@@ -34,9 +35,7 @@ public class DocumentScreen {
     public static VBox getView() {
         root = new VBox(22);
         root.getStyleClass().add("client-root");
-
         buildUI();
-
         return root;
     }
 
@@ -54,20 +53,17 @@ public class DocumentScreen {
         tripList.setMaxHeight(140);
         tripList.setVisible(false);
         tripList.setManaged(false);
-        tripList.setStyle(
-                "-fx-background-color: white;" +
-                        "-fx-border-color: #d6e0ee;" +
-                        "-fx-border-radius: 10;" +
-                        "-fx-background-radius: 10;"
-        );
+        tripList.setStyle("-fx-background-color: white;" +
+                "-fx-border-color: #d6e0ee;" +
+                "-fx-border-radius: 10;" +
+                "-fx-background-radius: 10;");
 
-        List<Trip> trips = TripRepository.getAllTrips();
+        List<Trip> trips = AppCache.getTrips();
 
         tripList.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(Trip t, boolean empty) {
                 super.updateItem(t, empty);
-
                 if (empty || t == null) {
                     setText(null);
                 } else {
@@ -99,8 +95,7 @@ public class DocumentScreen {
                                     || safe(t.getClientName()).toLowerCase().contains(keyword)
                                     || safe(t.getDestination()).toLowerCase().contains(keyword)
                                     || safe(t.getDate()).toLowerCase().contains(keyword)
-                                    || safe(t.getStatus()).toLowerCase().contains(keyword)
-                    )
+                                    || safe(t.getStatus()).toLowerCase().contains(keyword))
                     .collect(Collectors.toList());
 
             tripList.setItems(FXCollections.observableArrayList(filteredTrips));
@@ -114,16 +109,12 @@ public class DocumentScreen {
 
         tripList.setOnMouseClicked(e -> {
             Trip t = tripList.getSelectionModel().getSelectedItem();
-
             if (t == null) return;
 
             selectedTrip = t;
-
             selectingTrip[0] = true;
 
-            tripSearch.setText(
-                    t.getId() + " - " + safe(t.getClientName()) + " - " + safe(t.getDestination())
-            );
+            tripSearch.setText(t.getId() + " - " + safe(t.getClientName()) + " - " + safe(t.getDestination()));
 
             tripList.setVisible(false);
             tripList.setManaged(false);
@@ -168,29 +159,24 @@ public class DocumentScreen {
 
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select Document");
-
         chooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Documents", "*.pdf", "*.doc", "*.docx")
         );
 
         File selectedFile = chooser.showOpenDialog(null);
-
         if (selectedFile == null) return;
 
         try {
             File storageDir = getStorageDir();
 
-            String extension = selectedFile.getName()
-                    .substring(selectedFile.getName().lastIndexOf("."));
-
-            String safeClient = safe(selectedTrip.getClientName())
-                    .replaceAll("[^a-zA-Z0-9]", "_");
+            String extension = selectedFile.getName().substring(selectedFile.getName().lastIndexOf("."));
+            String safeClient = safe(selectedTrip.getClientName()).replaceAll("[^a-zA-Z0-9]", "_");
 
             String newFileName =
-                    "trip_" + selectedTrip.getId() +
-                            "_" + safeClient +
-                            "_" + UUID.randomUUID().toString().substring(0, 5) +
-                            extension;
+                    "trip_" + selectedTrip.getId()
+                            + "_" + safeClient
+                            + "_" + UUID.randomUUID().toString().substring(0, 5)
+                            + extension;
 
             File destFile = new File(storageDir, newFileName);
 
@@ -210,6 +196,7 @@ public class DocumentScreen {
             );
 
             DocumentRepository.addDocument(doc);
+            AppCache.reloadDocuments();
 
             refreshList();
             alert("Document uploaded successfully");
@@ -226,22 +213,25 @@ public class DocumentScreen {
         boolean hasData = false;
 
         if (selectedTrip == null) {
-            List<Trip> trips = TripRepository.getAllTrips();
+            List<Trip> trips = AppCache.getTrips();
 
             for (Trip t : trips) {
-                List<Document> docs = DocumentRepository.getDocumentsByTripUuid(t.getUuid());
+                List<Document> docs = AppCache.getDocuments().stream()
+                        .filter(d -> t.getUuid().equals(d.getTripUuid()))
+                        .collect(Collectors.toList());
 
                 for (Document doc : docs) {
                     addRow(t, doc);
                     hasData = true;
                 }
             }
-
         } else {
-            List<Document> docs = DocumentRepository.getDocumentsByClientUuid(selectedTrip.getUuid());
+            List<Document> docs = AppCache.getDocuments().stream()
+                    .filter(d -> selectedTrip.getUuid().equals(d.getTripUuid()))
+                    .collect(Collectors.toList());
 
             for (Document doc : docs) {
-                addRow(null, doc);
+                addRow(selectedTrip, doc);
                 hasData = true;
             }
         }
@@ -260,9 +250,7 @@ public class DocumentScreen {
         name.getStyleClass().add("card-title");
 
         Label meta = new Label(
-                (trip != null
-                        ? safe(trip.getClientName()) + " | " + safe(trip.getDestination())
-                        : "Trip Document")
+                (trip != null ? safe(trip.getClientName()) + " | " + safe(trip.getDestination()) : "Trip Document")
                         + " | " + readableSize(file.length())
         );
         meta.getStyleClass().add("card-subtitle");
@@ -292,7 +280,8 @@ public class DocumentScreen {
         });
 
         delete.setOnAction(e -> {
-            DocumentRepository.deleteDocument(doc.getId());
+            DocumentRepository.deleteDocument(doc.getUuid());
+            AppCache.reloadDocuments();
             refreshList();
         });
 
@@ -312,11 +301,9 @@ public class DocumentScreen {
 
     private static File getStorageDir() {
         File dir = new File(System.getProperty("user.home") + "/KP_Tours_Documents");
-
         if (!dir.exists()) {
             dir.mkdirs();
         }
-
         return dir;
     }
 

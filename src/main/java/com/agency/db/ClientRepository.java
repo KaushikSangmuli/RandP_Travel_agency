@@ -1,6 +1,8 @@
 package com.agency.db;
 
 import com.agency.model.Client;
+import com.agency.util.AppLogger;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +10,11 @@ import java.util.List;
 public class ClientRepository {
 
     public static void addClient(Client c) {
+        //KS if sending conn then why transaction is not created.
         try (Connection conn = DBConnection.getConnection()) {
             addClient(conn, c);
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e,"Failed while adding new client from UI ");
         }
     }
 
@@ -52,7 +55,7 @@ public class ClientRepository {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e , "Failed while getting Client List");
         }
 
         return list;
@@ -82,7 +85,7 @@ public class ClientRepository {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+           AppLogger.logError(e ,"Failed while getting client by ID ");
         }
 
         return null;
@@ -131,7 +134,7 @@ public class ClientRepository {
             return rs.next() && rs.getInt(1) > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+           AppLogger.logError(e , " Failed while checking if client has Trips ");
             return true;
         }
     }
@@ -151,7 +154,7 @@ public class ClientRepository {
             ps.executeUpdate();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Updating the Client.");
         }
     }
 
@@ -170,7 +173,7 @@ public class ClientRepository {
             ps.executeUpdate();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed while deleting the Client");
         }
     }
 }

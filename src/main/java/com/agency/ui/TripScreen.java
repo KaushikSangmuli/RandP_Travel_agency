@@ -1,7 +1,6 @@
 package com.agency.ui;
 
-import com.agency.db.ClientRepository;
-import com.agency.db.DocumentRepository;
+import com.agency.cache.AppCache;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Document;
@@ -15,7 +14,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.util.StringConverter;
 
 import java.awt.Desktop;
 import java.io.File;
@@ -23,6 +21,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import static com.agency.ui.DashboardScreen.loadIcon;
 
 public class TripScreen {
@@ -59,7 +58,7 @@ public class TripScreen {
         clearFilter.getStyleClass().add("back-btn");
 
         Button addBtn = new Button("Add New Trip");
-        addBtn.setGraphic(loadIcon("plus.png",12));
+        addBtn.setGraphic(loadIcon("plus.png", 12));
         addBtn.getStyleClass().add("client-add-btn");
 
         Region spacer = new Region();
@@ -80,12 +79,10 @@ public class TripScreen {
         idCol.setCellValueFactory(data -> {
             int rowIndex = data.getTableView().getItems().indexOf(data.getValue()) + 1;
             int displayIndex = currentPage * PAGE_SIZE + rowIndex;
-
-            return new javafx.beans.property.SimpleStringProperty(
-                    String.valueOf(displayIndex)
-            );
+            return new javafx.beans.property.SimpleStringProperty(String.valueOf(displayIndex));
         });
         idCol.setStyle("-fx-alignment: CENTER;");
+
         TableColumn<Trip, String> clientCol = col("Client", "clientName");
         TableColumn<Trip, String> destCol = col("Destination", "destination");
         TableColumn<Trip, String> dateCol = col("Date", "date");
@@ -123,26 +120,17 @@ public class TripScreen {
 
         TableColumn<Trip, String> purchaseCol = new TableColumn<>("Purchase");
         purchaseCol.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleStringProperty(
-                        String.valueOf(data.getValue().getPurchaseValue())
-                )
-        );
+                new javafx.beans.property.SimpleStringProperty(String.valueOf(data.getValue().getPurchaseValue())));
         purchaseCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<Trip, String> sellCol = new TableColumn<>("Sell");
         sellCol.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleStringProperty(
-                        String.valueOf(data.getValue().getSellValue())
-                )
-        );
+                new javafx.beans.property.SimpleStringProperty(String.valueOf(data.getValue().getSellValue())));
         sellCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<Trip, String> profitCol = new TableColumn<>("Profit");
         profitCol.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleStringProperty(
-                        String.valueOf(data.getValue().getProfit())
-                )
-        );
+                new javafx.beans.property.SimpleStringProperty(String.valueOf(data.getValue().getProfit())));
         profitCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<Trip, Void> detailsCol = new TableColumn<>("Details");
@@ -191,7 +179,9 @@ public class TripScreen {
 
                     confirm.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
-                            TripRepository.deleteTrip(trip.getId());
+                            TripRepository.deleteTrip(trip.getUuid());
+                            AppCache.reloadTrips();
+                            AppCache.reloadDocuments();
                             showTripList(root);
                         }
                     });
@@ -206,14 +196,13 @@ public class TripScreen {
             }
         });
 
-        table.getColumns().addAll(
-                idCol, clientCol, destCol, dateCol, typeCol, statusCol,
-                airlineCol, purchaseCol, sellCol, profitCol, detailsCol, actionsCol
-        );
+        table.getColumns().addAll(idCol, clientCol, destCol, dateCol, typeCol, statusCol,
+                airlineCol, purchaseCol, sellCol, profitCol, detailsCol, actionsCol);
 
-        Button prev = new Button("Prev",loadIcon("left.png",10));
-        Button next = new Button("Next",loadIcon("right.png",10));
+        Button prev = new Button("Prev", loadIcon("left.png", 10));
+        Button next = new Button("Next", loadIcon("right.png", 10));
         next.setContentDisplay(ContentDisplay.RIGHT);
+
         Label pageInfo = new Label();
 
         prev.getStyleClass().add("back-btn");
@@ -287,7 +276,7 @@ public class TripScreen {
         String keyword = text == null ? "" : text.toLowerCase().trim();
         String date = selectedDate == null ? "" : selectedDate.toString();
 
-        return TripRepository.getAllTrips().stream()
+        return AppCache.getTrips().stream()
                 .filter(t -> t.getDate() != null && !t.getDate().isEmpty())
                 .filter(t -> keyword.isEmpty()
                         || safe(t.getClientName()).toLowerCase().contains(keyword)
@@ -304,9 +293,9 @@ public class TripScreen {
     public static void showTripDetailsScreen(VBox root, Trip trip) {
         root.getChildren().clear();
 
-        Client client = getClientById(trip.getClientId());
+        Client client = getClientByUuid(trip.getClientUuid());
 
-        Button backBtn = new Button("Back",loadIcon("backArrow.png",12));
+        Button backBtn = new Button("Back", loadIcon("backArrow.png", 12));
         backBtn.getStyleClass().add("back-btn");
 
         Label title = new Label("Trip Details");
@@ -321,47 +310,43 @@ public class TripScreen {
         Label section1 = new Label("Client Details");
         section1.getStyleClass().add("section-title");
 
-        Label clientInfo = new Label(
-                client == null ? "Client not found" :
-                        "Name: " + safe(client.getName()) +
-                        "\nPhone: " + safe(client.getPhone()) +
-                        "\nEmail: " + safe(client.getEmail()) +
-                        "\nCity: " + safe(client.getCity())
-        );
+        Label clientInfo = new Label(client == null ? "Client not found" :
+                "Name: " + safe(client.getName()) +
+                "\nPhone: " + safe(client.getPhone()) +
+                "\nEmail: " + safe(client.getEmail()) +
+                "\nCity: " + safe(client.getCity()));
 
         Label section2 = new Label("Trip Details");
         section2.getStyleClass().add("section-title");
 
-        Label tripInfo = new Label(
-                "Destination: " + safe(trip.getDestination()) +
-                        "\nDate: " + safe(trip.getDate()) +
-                        "\nType: " + safe(trip.getType()) +
-                        "\nStatus: " + safe(trip.getStatus()) +
-                        "\nAirline: " + safe(trip.getAirlineName())
-        );
+        Label tripInfo = new Label("Destination: " + safe(trip.getDestination()) +
+                "\nDate: " + safe(trip.getDate()) +
+                "\nType: " + safe(trip.getType()) +
+                "\nStatus: " + safe(trip.getStatus()) +
+                "\nAirline: " + safe(trip.getAirlineName()));
 
         Label section3 = new Label("Payment Details");
         section3.getStyleClass().add("section-title");
 
-        Label paymentInfo = new Label(
-                "Purchase: " + trip.getPurchaseValue() +
-                        "\nSell: " + trip.getSellValue() +
-                        "\nService Fee: " + trip.getServiceFee() +
-                        "\nProfit: " + trip.getProfit()
-        );
+        Label paymentInfo = new Label("Purchase: " + trip.getPurchaseValue() +
+                "\nSell: " + trip.getSellValue() +
+                "\nService Fee: " + trip.getServiceFee() +
+                "\nProfit: " + trip.getProfit());
 
         Label section4 = new Label("Documents");
         section4.getStyleClass().add("section-title");
 
         VBox docsBox = new VBox(8);
-        List<Document> documents = DocumentRepository.getDocumentsByTripUuid(trip.getUuid());
+
+        List<Document> documents = AppCache.getDocuments().stream()
+                .filter(d -> trip.getUuid().equals(d.getTripUuid()))
+                .collect(Collectors.toList());
 
         if (documents.isEmpty()) {
             docsBox.getChildren().add(new Label("No documents uploaded yet"));
         } else {
             for (Document doc : documents) {
                 File file = new File(doc.getFilePath());
-
                 Label fileName = new Label(file.getName());
 
                 Button viewBtn = new Button("View");
@@ -371,7 +356,7 @@ public class TripScreen {
                     try {
                         Desktop.getDesktop().open(file);
                     } catch (Exception ex) {
-                        AppLogger.logError(ex , "Failed while opening file.");
+                        AppLogger.logError(ex, "Failed while opening file.");
                         alert("Cannot open file");
                     }
                 });
@@ -382,22 +367,17 @@ public class TripScreen {
             }
         }
 
-        card.getChildren().addAll(
-                section1, clientInfo,
-                section2, tripInfo,
-                section3, paymentInfo,
-                section4, docsBox
-        );
+        card.getChildren().addAll(section1, clientInfo, section2, tripInfo,
+                section3, paymentInfo, section4, docsBox);
 
         backBtn.setOnAction(e -> showTripList(root));
 
         root.getChildren().addAll(header, card);
     }
 
-    private static Client getClientById(int clientId) {
-        return ClientRepository.getAllClients()
-                .stream()
-                .filter(c -> c.getId() == clientId)
+    private static Client getClientByUuid(String clientUuid) {
+        return AppCache.getClients().stream()
+                .filter(c -> clientUuid != null && clientUuid.equals(c.getUuid()))
                 .findFirst()
                 .orElse(null);
     }
@@ -407,7 +387,7 @@ public class TripScreen {
 
         boolean isEdit = editTrip != null;
 
-        Button backBtn = new Button("Back",loadIcon("backArrow.png",12));
+        Button backBtn = new Button("Back", loadIcon("backArrow.png", 12));
         backBtn.getStyleClass().add("back-btn");
 
         Label title = new Label(isEdit ? "Edit Trip" : "Add New Trip");
@@ -437,17 +417,15 @@ public class TripScreen {
         clientList.setPrefHeight(140);
         clientList.setMinHeight(140);
         clientList.setMaxHeight(140);
-        clientList.setStyle(
-                "-fx-background-color: white;" +
-                        "-fx-border-color: #d6e0ee;" +
-                        "-fx-border-radius: 10;" +
-                        "-fx-background-radius: 10;"
-        );
+        clientList.setStyle("-fx-background-color: white;" +
+                "-fx-border-color: #d6e0ee;" +
+                "-fx-border-radius: 10;" +
+                "-fx-background-radius: 10;");
 
         clientList.setVisible(false);
         clientList.setManaged(false);
 
-        List<Client> clients = ClientRepository.getAllClients();
+        List<Client> clients = AppCache.getClients();
         clientList.setItems(FXCollections.observableArrayList(clients));
 
         final Client[] selectedClientHolder = {null};
@@ -485,13 +463,11 @@ public class TripScreen {
             }
 
             List<Client> filteredClients = clients.stream()
-                    .filter(c ->
-                            String.valueOf(c.getId()).contains(keyword)
-                                    || safe(c.getName()).toLowerCase().contains(keyword)
-                                    || safe(c.getPhone()).toLowerCase().contains(keyword)
-                                    || safe(c.getEmail()).toLowerCase().contains(keyword)
-                                    || safe(c.getCity()).toLowerCase().contains(keyword)
-                    )
+                    .filter(c -> String.valueOf(c.getId()).contains(keyword)
+                            || safe(c.getName()).toLowerCase().contains(keyword)
+                            || safe(c.getPhone()).toLowerCase().contains(keyword)
+                            || safe(c.getEmail()).toLowerCase().contains(keyword)
+                            || safe(c.getCity()).toLowerCase().contains(keyword))
                     .collect(Collectors.toList());
 
             clientList.setItems(FXCollections.observableArrayList(filteredClients));
@@ -503,19 +479,17 @@ public class TripScreen {
 
         clientList.setOnMouseClicked(e -> {
             Client c = clientList.getSelectionModel().getSelectedItem();
-
             if (c == null) return;
 
             selectedClientHolder[0] = c;
-
             selectingClient[0] = true;
 
             clientSearch.setText(c.getId() + " - " + safe(c.getName()) + " - " + safe(c.getPhone()));
-
             clientName.setText(safe(c.getName()));
             clientPhone.setText(safe(c.getPhone()));
             clientEmail.setText(safe(c.getEmail()));
             clientCity.setText(safe(c.getCity()));
+
             clientList.setVisible(false);
             clientList.setManaged(false);
 
@@ -527,6 +501,7 @@ public class TripScreen {
         DatePicker date = new DatePicker();
         date.getStyleClass().add("client-input");
         date.setPromptText("Select date");
+
         date.setDayCellFactory(picker -> new DateCell() {
             @Override
             public void updateItem(LocalDate item, boolean empty) {
@@ -548,17 +523,13 @@ public class TripScreen {
         TextField serviceFee = input("Enter Service amount");
 
         if (isEdit) {
-            Client selectedClient = getClientById(editTrip.getClientId());
+            Client selectedClient = getClientByUuid(editTrip.getClientUuid());
 
             if (selectedClient != null) {
                 selectedClientHolder[0] = selectedClient;
-
                 selectingClient[0] = true;
 
-                clientSearch.setText(
-                        selectedClient.getId() + " - " + safe(selectedClient.getName()) + " - " + safe(selectedClient.getPhone())
-                );
-
+                clientSearch.setText(selectedClient.getId() + " - " + safe(selectedClient.getName()) + " - " + safe(selectedClient.getPhone()));
                 clientName.setText(safe(selectedClient.getName()));
                 clientPhone.setText(safe(selectedClient.getPhone()));
                 clientEmail.setText(safe(selectedClient.getEmail()));
@@ -584,31 +555,37 @@ public class TripScreen {
         form.add(label("Client ID"), 0, 0);
         VBox clientSearchBox = new VBox(8, clientSearch, clientList);
         form.add(clientSearchBox, 0, 1);
+
         form.add(label("Client Name"), 1, 0);
         form.add(clientName, 1, 1);
 
         form.add(label("Phone"), 0, 2);
         form.add(clientPhone, 0, 3);
+
         form.add(label("Email"), 1, 2);
         form.add(clientEmail, 1, 3);
 
         form.add(label("City"), 0, 4);
         form.add(clientCity, 0, 5);
+
         form.add(label("Destination"), 1, 4);
         form.add(destination, 1, 5);
 
         form.add(label("Date"), 0, 6);
         form.add(date, 0, 7);
+
         form.add(label("Trip Type"), 1, 6);
         form.add(type, 1, 7);
 
         form.add(label("Status"), 0, 8);
         form.add(status, 0, 9);
+
         form.add(label("Airline Name"), 1, 8);
         form.add(airline, 1, 9);
 
         form.add(label("Purchase Value"), 0, 10);
         form.add(purchase, 0, 11);
+
         form.add(label("Sell Value"), 1, 10);
         form.add(sell, 1, 11);
 
@@ -662,11 +639,13 @@ public class TripScreen {
 
             if (isEdit) {
                 newTrip.setId(editTrip.getId());
-                TripRepository.updateTrip(editTrip.getId(), newTrip);
+                newTrip.setUuid(editTrip.getUuid());
+                TripRepository.updateTrip(newTrip);
             } else {
                 TripRepository.addTrip(newTrip);
             }
 
+            AppCache.reloadTrips();
             showTripList(root);
         });
 
@@ -687,7 +666,7 @@ public class TripScreen {
         try {
             return Double.parseDouble(value.trim());
         } catch (Exception e) {
-            AppLogger.logError(e, "Parse amount method Failed... for value = "+ value);
+            AppLogger.logError(e, "Parse amount method Failed... for value = " + value);
             return 0;
         }
     }
@@ -714,6 +693,7 @@ public class TripScreen {
         label.getStyleClass().add("form-label");
         return label;
     }
+
     private static Button createIconButton(String iconPath, String fallbackText, String styleClass) {
         Node graphic = null;
 
@@ -722,7 +702,8 @@ public class TripScreen {
             icon.setFitWidth(16);
             icon.setFitHeight(16);
             graphic = icon;
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         Button btn = graphic == null ? new Button(fallbackText) : new Button("", graphic);
         btn.getStyleClass().add(styleClass);

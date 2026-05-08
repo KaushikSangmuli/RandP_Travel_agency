@@ -1,5 +1,6 @@
 package com.agency;
 
+import com.agency.cache.AppCache;
 import com.agency.db.DBInit;
 import com.agency.license.LicenseManager;
 import com.agency.license.TrialManager;
@@ -18,7 +19,7 @@ public class MainApp extends Application {
 
         DBInit.initialize();
         com.agency.ui.SettingsScreen.runDailyBackupIfNeeded();
-
+        AppCache.loadAll();
         // 1. If valid license exists, continue app
         if (LicenseManager.isApplicationAllowed()) {
             openApp(stage);

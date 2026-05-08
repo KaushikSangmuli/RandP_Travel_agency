@@ -1,5 +1,6 @@
 package com.agency.ui;
 
+import com.agency.cache.AppCache;
 import com.agency.db.ClientRepository;
 import com.agency.db.DocumentRepository;
 import com.agency.db.TripRepository;
@@ -67,7 +68,7 @@ public class ClientsScreen {
         search.getStyleClass().add("client-search");
 
         ObservableList<Client> clientList =
-                FXCollections.observableArrayList(ClientRepository.getAllClients());
+                FXCollections.observableArrayList(AppCache.getClients());
 
         FilteredList<Client> filteredClients =
                 new FilteredList<>(clientList, p -> true);
@@ -132,9 +133,8 @@ public class ClientsScreen {
                 deleteBtn.setOnAction(e -> {
                     Client client = getTableView().getItems().get(getIndex());
 
-                    boolean hasTrips = TripRepository.getAllTrips()
-                            .stream()
-                            .anyMatch(t -> t.getClientId() == client.getId());
+                    boolean hasTrips = AppCache.getTrips().stream()
+                            .anyMatch(t -> client.getUuid().equals(t.getClientUuid()));
 
                     if (hasTrips) {
                         alert("This client has linked trips. Please delete the trips first or keep the client record for history.");
@@ -149,6 +149,7 @@ public class ClientsScreen {
                     confirm.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
                             ClientRepository.deleteClient(client.getUuid());
+                            AppCache.reloadClients();
                             showClientList(root);
                         }
                     });
@@ -269,7 +270,7 @@ public class ClientsScreen {
         double totalProfit = 0;
         int tripCount = 0;
 
-        List<Trip> trips = TripRepository.getAllTrips();
+        List<Trip> trips = AppCache.getTrips();
 
         for (Trip trip : trips) {
             if (trip.getClientId() == client.getId()) {
@@ -308,9 +309,12 @@ public class ClientsScreen {
         List<Document> allDocs = new ArrayList<>();
 
 
+
         for (Trip t : trips) {
-            if (t.getClientId() == client.getId()) {
-                allDocs.addAll(DocumentRepository.getDocumentsByTripUuid(t.getUuid()));
+            if (client.getUuid().equals(t.getClientUuid())) {
+                AppCache.getDocuments().stream()
+                        .filter(d -> t.getUuid().equals(d.getTripUuid()))
+                        .forEach(allDocs::add);
             }
         }
 
@@ -416,9 +420,12 @@ public class ClientsScreen {
             );
 
             if (isEdit) {
+                client.setUuid(editClient.getUuid());
                 ClientRepository.updateClient(client);
+                AppCache.reloadClients();
             } else {
                 ClientRepository.addClient(client);
+                AppCache.reloadClients();
             }
 
             showClientList(root);

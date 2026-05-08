@@ -1,7 +1,6 @@
 package com.agency.ui;
 
-import com.agency.db.ClientRepository;
-import com.agency.db.TripRepository;
+import com.agency.cache.AppCache;
 import com.agency.model.Client;
 import com.agency.model.Trip;
 import javafx.geometry.Pos;
@@ -29,7 +28,6 @@ public class CalendarScreen {
     private static Label monthLabel;
     private static GridPane calendarGrid;
     private static VBox tripsPanel;
-
     private static Button monthBtn;
     private static Button weekBtn;
     private static Button dayBtn;
@@ -66,9 +64,8 @@ public class CalendarScreen {
     }
 
     private static HBox createControls() {
-
-        Button prev = new Button("",loadIcon("left.png",16));
-        Button next = new Button("",loadIcon("right.png",16));
+        Button prev = new Button("", loadIcon("left.png", 16));
+        Button next = new Button("", loadIcon("right.png", 16));
         Button today = new Button("Today");
 
         monthBtn = new Button("Month");
@@ -204,6 +201,7 @@ public class CalendarScreen {
             calendarGrid.add(createDateCell(date, 130, 82), col, row);
 
             col++;
+
             if (col == 7) {
                 col = 0;
                 row++;
@@ -213,7 +211,6 @@ public class CalendarScreen {
 
     private static void showWeekView() {
         LocalDate start = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() % 7);
-
         String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
         for (int i = 0; i < 7; i++) {
@@ -241,7 +238,6 @@ public class CalendarScreen {
         cell.getStyleClass().add("calendar-cell");
 
         Label dateLabel = new Label(String.valueOf(date.getDayOfMonth()));
-
         dateLabel.setStyle("-fx-font-weight:bold;");
 
         if (date.equals(selectedDate)) {
@@ -249,6 +245,7 @@ public class CalendarScreen {
         } else if (date.equals(LocalDate.now())) {
             dateLabel.getStyleClass().add("calendar-today");
         }
+
         List<Trip> trips = getTripsByDate(date);
 
         if (!trips.isEmpty()) {
@@ -304,7 +301,7 @@ public class CalendarScreen {
             table.add(cell(trip.getClientName()), 0, row);
             table.add(cell(trip.getDestination()), 1, row);
             table.add(cell(trip.getType()), 2, row);
-            table.add(cell(getClientPhone(trip.getClientId())), 3, row);
+            table.add(cell(getClientPhone(trip.getClientUuid())), 3, row);
 
             Label status = cell(trip.getStatus());
             status.getStyleClass().add("status-pill");
@@ -322,6 +319,7 @@ public class CalendarScreen {
             status.setPrefWidth(105);
             status.setMaxWidth(105);
             status.setAlignment(Pos.CENTER);
+
             table.add(status, 4, row);
 
             row++;
@@ -351,14 +349,17 @@ public class CalendarScreen {
     }
 
     private static List<Trip> getTripsByDate(LocalDate date) {
-        return TripRepository.getAllTrips()
-                .stream()
+        return AppCache.getTrips().stream()
                 .filter(t -> t.getDate() != null && t.getDate().equals(date.toString()))
                 .collect(Collectors.toList());
     }
 
-    private static String getClientPhone(int clientId) {
-        Client client = ClientRepository.getClientById(clientId);
+    private static String getClientPhone(String clientUuid) {
+        Client client = AppCache.getClients().stream()
+                .filter(c -> clientUuid != null && clientUuid.equals(c.getUuid()))
+                .findFirst()
+                .orElse(null);
+
         return client == null ? "-" : client.getPhone();
     }
 }

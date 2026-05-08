@@ -9,6 +9,7 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import com.agency.cache.AppCache;
 
 import javax.swing.text.html.ImageView;
 import java.util.List;
@@ -57,9 +58,8 @@ public class ReportsScreen {
 
     // ================= DATA SOURCE =================
     private static List<Trip> getTrips() {
-        return TripRepository.getAllTrips();
+        return AppCache.getTrips();
     }
-
     // ================= CARDS =================
     private static VBox reportCard(String title, String value, String styleClass) {
         VBox box = new VBox(8);

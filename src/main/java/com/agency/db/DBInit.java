@@ -1,5 +1,7 @@
 package com.agency.db;
 
+import com.agency.util.AppLogger;
+
 import java.sql.Connection;
 import java.sql.Statement;
 
@@ -45,15 +47,29 @@ public class DBInit {
                         "sub_type TEXT" +
                         ");";
 
+        String idxTripsClientUuid =
+                "CREATE INDEX IF NOT EXISTS idx_trips_client_uuid ON trips(client_uuid);";
+
+        String idxDocumentsTripUuid =
+                "CREATE INDEX IF NOT EXISTS idx_documents_trip_uuid ON documents(trip_uuid);";
+
+        String idxDocumentsClientUuid =
+                "CREATE INDEX IF NOT EXISTS idx_documents_client_uuid ON documents(client_uuid);";
+
+
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(clientsTable);
             stmt.execute(tripsTable);
             stmt.execute(documentsTable);
+            stmt.execute(idxTripsClientUuid);
+            stmt.execute(idxDocumentsTripUuid);
+            stmt.execute(idxDocumentsClientUuid);
 
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            AppLogger.logError(e, "Not able to create tables in DB...");
         }
     }
 }

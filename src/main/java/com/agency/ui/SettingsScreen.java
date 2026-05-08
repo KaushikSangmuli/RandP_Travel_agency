@@ -1,12 +1,16 @@
 package com.agency.ui;
 
 import com.agency.backup.BackupData;
+import com.agency.backup.BackupDocument;
 import com.agency.backup.BackupTrip;
 import com.agency.backup.ClientWithTrips;
+import com.agency.cache.AppCache;
 import com.agency.db.ClientRepository;
 import com.agency.db.DBConnection;
+import com.agency.db.DocumentRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
+import com.agency.model.Document;
 import com.agency.model.Trip;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.geometry.Pos;
@@ -23,11 +27,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static com.agency.ui.DashboardScreen.loadIcon;
 
 public class SettingsScreen {
-
     private static boolean dailyBackupEnabled = false;
     private static boolean notificationsEnabled = true;
 
@@ -92,17 +96,10 @@ public class SettingsScreen {
             );
 
             DashboardScreen.updateUserName(enteredName.trim());
-
             alert("Profile and login credentials updated successfully");
         });
 
-        profile.getChildren().addAll(
-                name,
-                email,
-                loginUsername,
-                loginPassword,
-                saveProfile
-        );
+        profile.getChildren().addAll(name, email, loginUsername, loginPassword, saveProfile);
 
         VBox app = card("App Settings", loadIcon("appSetting.png", 16));
 
@@ -119,10 +116,7 @@ public class SettingsScreen {
         VBox backup = card("Backup & Data", loadIcon("backupSetting.png", 16));
 
         Properties settings = loadProfileData();
-
-        dailyBackupEnabled = Boolean.parseBoolean(
-                settings.getProperty("daily.backup.enabled", "false")
-        );
+        dailyBackupEnabled = Boolean.parseBoolean(settings.getProperty("daily.backup.enabled", "false"));
 
         CheckBox dailyBackup = toggle(dailyBackupEnabled);
         HBox dailyBackupRow = toggleRow("Enable Daily Backup", dailyBackup);
@@ -165,12 +159,11 @@ public class SettingsScreen {
         backup.getChildren().addAll(dailyBackupRow, backupBtn, restoreBtn);
 
         VBox info = card("App Info", loadIcon("information.png", 16));
-
         info.getChildren().addAll(
                 new Label("Version: 1.0.0"),
                 new Label("Company: KP Tours & Travels"),
-                new Label("Clients: " + ClientRepository.getAllClients().size()),
-                new Label("Trips: " + TripRepository.getAllTrips().size())
+                new Label("Clients: " + AppCache.getClients().size()),
+                new Label("Trips: " + AppCache.getTrips().size())
         );
 
         HBox top = new HBox(20, profile, app);
@@ -192,9 +185,12 @@ public class SettingsScreen {
             if (!dir.exists()) dir.mkdirs();
 
             LocalDateTime now = LocalDateTime.now();
-            String fileName = String.format("%02d_%02d_%d_%02d_%02d_%02d_backup.json",
+
+            String fileName = String.format(
+                    "%02d_%02d_%d_%02d_%02d_%02d_backup.json",
                     now.getDayOfMonth(), now.getMonthValue(), now.getYear(),
-                    now.getHour(), now.getMinute(), now.getSecond());
+                    now.getHour(), now.getMinute(), now.getSecond()
+            );
 
             File backupFile = new File(dir, fileName);
 
@@ -211,11 +207,12 @@ public class SettingsScreen {
             alert("Backup failed");
         }
     }
+
     private static JSONObject buildBackupJson() {
         JSONObject root = new JSONObject();
         JSONArray clientsArray = new JSONArray();
 
-        List<Client> clients = ClientRepository.getAllClients();
+        List<Client> clients = AppCache.getClients();
 
         for (Client c : clients) {
             JSONObject clientJson = new JSONObject();
@@ -229,7 +226,9 @@ public class SettingsScreen {
 
             JSONArray tripsArray = new JSONArray();
 
-            List<Trip> trips = TripRepository.getTripsByClientUuid(c.getUuid());
+            List<Trip> trips = AppCache.getTrips().stream()
+                    .filter(t -> c.getUuid().equals(t.getClientUuid()))
+                    .collect(Collectors.toList());
 
             for (Trip t : trips) {
                 JSONObject tripJson = new JSONObject();
@@ -248,6 +247,27 @@ public class SettingsScreen {
                 tripJson.put("airlineName", safe(t.getAirlineName()));
                 tripJson.put("serviceFee", t.getServiceFee());
 
+                JSONArray documentsArray = new JSONArray();
+
+                List<Document> documents = AppCache.getDocuments().stream()
+                        .filter(d -> t.getUuid().equals(d.getTripUuid()))
+                        .collect(Collectors.toList());
+
+                for (Document d : documents) {
+                    JSONObject docJson = new JSONObject();
+
+                    docJson.put("id", d.getId());
+                    docJson.put("uuid", d.getUuid());
+                    docJson.put("tripUuid", d.getTripUuid());
+                    docJson.put("clientUuid", d.getClientUuid());
+                    docJson.put("filePath", safe(d.getFilePath()));
+                    docJson.put("type", safe(d.getType()));
+                    docJson.put("subType", safe(d.getSubType()));
+
+                    documentsArray.put(docJson);
+                }
+
+                tripJson.put("documents", documentsArray);
                 tripsArray.put(tripJson);
             }
 
@@ -258,6 +278,7 @@ public class SettingsScreen {
         root.put("clients", clientsArray);
         return root;
     }
+
     private static void restoreBackup() {
         Connection conn = null;
 
@@ -273,10 +294,9 @@ public class SettingsScreen {
             BackupData data = mapper.readValue(file, BackupData.class);
 
             conn = DBConnection.getConnection();
-            conn.setAutoCommit(false); // 🔥 START TRANSACTION
+            conn.setAutoCommit(false);
 
             for (ClientWithTrips c : data.clients) {
-
                 Client client = new Client(c.id, c.name, c.phone, c.email, c.city);
                 client.setUuid(c.uuid);
 
@@ -286,7 +306,6 @@ public class SettingsScreen {
 
                 if (c.trips != null) {
                     for (BackupTrip bt : c.trips) {
-
                         Trip trip = new Trip(
                                 bt.clientId,
                                 bt.clientUuid,
@@ -306,16 +325,37 @@ public class SettingsScreen {
                         if (!TripRepository.existsByUuid(conn, bt.uuid)) {
                             TripRepository.addTrip(conn, trip);
                         }
+
+                        if (bt.documents != null) {
+                            for (BackupDocument bd : bt.documents) {
+                                Document doc = new Document(
+                                        bd.id,
+                                        bd.tripUuid,
+                                        bd.clientUuid,
+                                        bd.filePath,
+                                        bd.type,
+                                        bd.subType
+                                );
+
+                                doc.setUuid(bd.uuid);
+
+                                if (!DocumentRepository.existsByUuid(conn, bd.uuid)) {
+                                    DocumentRepository.addDocument(conn, doc);
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            conn.commit(); // ✅ SUCCESS → SAVE ALL
+            conn.commit();
+            AppCache.loadAll();
+
             alert("Restore completed successfully");
 
         } catch (Exception e) {
             try {
-                if (conn != null) conn.rollback(); // ❌ FAIL → UNDO ALL
+                if (conn != null) conn.rollback();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -383,10 +423,7 @@ public class SettingsScreen {
         try {
             Properties props = loadProfileData();
 
-            boolean enabled = Boolean.parseBoolean(
-                    props.getProperty("daily.backup.enabled", "false")
-            );
-
+            boolean enabled = Boolean.parseBoolean(props.getProperty("daily.backup.enabled", "false"));
             if (!enabled) return;
 
             String today = LocalDate.now().toString();
@@ -415,9 +452,12 @@ public class SettingsScreen {
             if (!dir.exists()) dir.mkdirs();
 
             LocalDateTime now = LocalDateTime.now();
-            String fileName = String.format("%02d_%02d_%d_%02d_%02d_%02d_auto_backup.json",
+
+            String fileName = String.format(
+                    "%02d_%02d_%d_%02d_%02d_%02d_auto_backup.json",
                     now.getDayOfMonth(), now.getMonthValue(), now.getYear(),
-                    now.getHour(), now.getMinute(), now.getSecond());
+                    now.getHour(), now.getMinute(), now.getSecond()
+            );
 
             File backupFile = new File(dir, fileName);
 

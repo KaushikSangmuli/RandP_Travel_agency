@@ -1,5 +1,7 @@
 package com.agency.backup;
 
+import java.util.List;
+
 public class BackupTrip {
     public int id; // UI/internal only
     public String uuid;
@@ -15,4 +17,6 @@ public class BackupTrip {
     public double sellValue;
     public String airlineName;
     public double serviceFee;
+
+    public List<BackupDocument> documents;
 }

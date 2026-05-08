@@ -1,5 +1,7 @@
 package com.agency.db;
 
+import com.agency.util.AppLogger;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -21,7 +23,7 @@ public class DBConnection {
             new File(DB_DIR).mkdirs();
             return DriverManager.getConnection(DB_URL); // 🔥 NEW connection every time
         } catch (SQLException e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "failed while establishing connection");
             return null;
         }
 
