@@ -98,7 +98,7 @@ public class TripRepository {
             }
 
         } catch (Exception e) {
-
+            AppLogger.logError(e, "Failed While Getting Trips by Clients by UUID.");
         }
 
         return list;
@@ -127,7 +127,7 @@ public class TripRepository {
             ps.executeUpdate();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed While Update Trip "+t.getClientName()+t.getDestination());
         }
     }
 

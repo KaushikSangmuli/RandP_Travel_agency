@@ -68,7 +68,6 @@ public class DBInit {
             stmt.execute(idxDocumentsClientUuid);
 
         } catch (Exception e) {
-//            e.printStackTrace();
             AppLogger.logError(e, "Not able to create tables in DB...");
         }
     }

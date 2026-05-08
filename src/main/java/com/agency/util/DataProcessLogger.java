@@ -35,7 +35,7 @@ public class DataProcessLogger {
             out.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Logging Backup Entries..");
         }
     }
 
@@ -60,7 +60,7 @@ public class DataProcessLogger {
             out.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Logging Restore Entries..");
         }
     }
 

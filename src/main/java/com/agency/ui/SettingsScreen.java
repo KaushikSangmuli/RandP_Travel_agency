@@ -12,6 +12,7 @@ import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Document;
 import com.agency.model.Trip;
+import com.agency.util.AppLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -203,7 +204,7 @@ public class SettingsScreen {
             alert("Backup saved successfully:\n" + backupFile.getAbsolutePath());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed While Creating a Backup ");
             alert("Backup failed");
         }
     }
@@ -360,14 +361,14 @@ public class SettingsScreen {
                 ex.printStackTrace();
             }
 
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Restore Backup Files From BackupDB");
             alert("Restore failed");
 
         } finally {
             try {
                 if (conn != null) conn.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                AppLogger.logError(e, "Failed at closing Connection in Restore methods Catch Block.");
             }
         }
     }
@@ -398,7 +399,7 @@ public class SettingsScreen {
             out.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Saving Profile Data. ");
             alert("Failed to save profile");
         }
     }
@@ -413,7 +414,7 @@ public class SettingsScreen {
                 in.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Loading Profile Data..");
         }
 
         return props;
@@ -442,7 +443,7 @@ public class SettingsScreen {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Running Daily Backup ...");
         }
     }
 
@@ -470,7 +471,7 @@ public class SettingsScreen {
             return true;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            AppLogger.logError(e, "Failed at Running Create backup Silently...");
             return false;
         }
     }
