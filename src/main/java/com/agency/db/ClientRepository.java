@@ -49,7 +49,7 @@ public class ClientRepository {
                         rs.getString("email"),
                         rs.getString("city")
                 );
-
+// KS: set UUID in the newly created object while inserting in cache.
                 c.setUuid(rs.getString("uuid"));
                 list.add(c);
             }

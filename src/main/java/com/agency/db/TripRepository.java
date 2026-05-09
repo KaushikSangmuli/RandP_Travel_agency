@@ -145,6 +145,7 @@ public class TripRepository {
         }
     }
 
+    //KS : Helper Method to add data in the trip list in Cache Data
     private static Trip mapTrip(ResultSet rs) throws SQLException {
         Trip t = new Trip(
                 rs.getInt("client_id"),
@@ -159,7 +160,7 @@ public class TripRepository {
                 rs.getString("airline_name"),
                 rs.getDouble("service_fee")
         );
-
+// KS: Id is not part of constructor, New UUID created to replacing with actual one
         t.setId(rs.getInt("id"));
         t.setUuid(rs.getString("uuid"));
 

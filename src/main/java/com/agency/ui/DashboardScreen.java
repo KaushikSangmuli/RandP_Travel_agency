@@ -33,8 +33,8 @@ public class DashboardScreen {
     private static HBox mainRoot;
     private static Label userLabel;
 
-    private static List<Trip> cachedTrips = new ArrayList<>();
-    private static List<Client> cachedClients = new ArrayList<>();
+//    private static List<Trip> cachedTrips = new ArrayList<>();
+//    private static List<Client> cachedClients = new ArrayList<>();
 
     public static void show(Stage stage) {
         VBox sidebar = new VBox(14);
@@ -68,7 +68,7 @@ public class DashboardScreen {
         content.getStyleClass().add("content");
 
         setActive(dashboardBtn);
-        loadDashboardContent();
+        loadDashboardContent();  //KS: Laoding Dashboard Data.
 
         dashboardBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(dashboardBtn);loadDashboardContent();}));
         clientsBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(clientsBtn);loadClientsScreen();}));
@@ -104,7 +104,8 @@ public class DashboardScreen {
     private static void loadDashboardContent() {
         content.getChildren().clear();
 
-        refreshCache();
+//        refreshCache();
+//        AppCache.loadAll();
 
         Label title = new Label("Dashboard");
         title.getStyleClass().add("page-title");
@@ -114,14 +115,14 @@ public class DashboardScreen {
         VBox c1 = createCard(
                 "/icons/client.png",
                 "Total Clients",
-                String.valueOf(cachedClients.size()),
+                String.valueOf(AppCache.getClients().size()),
                 "All Registered Clients"
         );
 
         VBox c2 = createCard(
                 "/icons/trips.png",
                 "Total Trips",
-                String.valueOf(cachedTrips.size()),
+                String.valueOf(AppCache.getTrips().size()),
                 "All Trips Stored"
         );
 
@@ -191,10 +192,10 @@ public class DashboardScreen {
     }
 
 
-    private static void refreshCache() {
-        cachedClients = AppCache.getClients();
-        cachedTrips = AppCache.getTrips();
-    }
+//    private static void refreshCache() {
+//        cachedClients = AppCache.getClients();
+//        cachedTrips = AppCache.getTrips();
+//    }
 
     private static VBox createUpcomingTripsPanel() {
         Label title = new Label("Upcoming Trips");
@@ -384,7 +385,7 @@ public class DashboardScreen {
         LocalDate today = LocalDate.now();
         LocalDate next7Days = today.plusDays(7);
 
-        return cachedTrips.stream()
+        return AppCache.getTrips().stream()
                 .filter(t -> parseDate(t.getDate()) != null)
                 .filter(t -> {
                     LocalDate d = parseDate(t.getDate());
@@ -401,7 +402,7 @@ public class DashboardScreen {
     private static int getThisMonthTripCount() {
         LocalDate now = LocalDate.now();
 
-        return (int) cachedTrips.stream()
+        return (int) AppCache.getTrips().stream()
                 .filter(t -> parseDate(t.getDate()) != null)
                 .filter(t -> {
                     LocalDate d = parseDate(t.getDate());
@@ -421,7 +422,7 @@ public class DashboardScreen {
     }
 
     private static Client getClientById(int clientId) {
-        return cachedClients.stream()
+        return AppCache.getClients().stream()
                 .filter(c -> c.getId() == clientId)
                 .findFirst()
                 .orElseGet(() -> ClientRepository.getClientById(clientId));
@@ -517,7 +518,8 @@ public class DashboardScreen {
     private static void loadSearchResults(String keyword) {
         content.getChildren().clear();
 
-        refreshCache();
+//        refreshCache();
+//        AppCache.loadAll(); //KS: NO NEED TO REFRESH HERE BCZ WE ARE ALREADY HANDLING IT ON CRUD OPPERATIONS
 
         String value = keyword == null ? "" : keyword.toLowerCase().trim();
 
@@ -530,7 +532,7 @@ public class DashboardScreen {
         VBox resultPanel = new VBox(14);
         resultPanel.getStyleClass().add("panel");
 
-        List<Client> matchedClients = cachedClients.stream()
+        List<Client> matchedClients = AppCache.getClients().stream()
                 .filter(c ->
                         safe(c.getName()).toLowerCase().contains(value)
                                 || safe(c.getPhone()).toLowerCase().contains(value)
@@ -539,7 +541,7 @@ public class DashboardScreen {
                 )
                 .collect(Collectors.toList());
 
-        List<Trip> matchedTrips = cachedTrips.stream()
+        List<Trip> matchedTrips = AppCache.getTrips().stream()
                 .filter(t ->
                         safe(t.getClientName()).toLowerCase().contains(value)
                                 || safe(t.getDestination()).toLowerCase().contains(value)

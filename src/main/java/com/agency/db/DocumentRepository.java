@@ -155,7 +155,7 @@ public class DocumentRepository {
            AppLogger.logError(e, "Failed while Deleting the Document.");
         }
     }
-
+//KS : Helper method to add documents in the Cached List
     private static Document mapDocument(ResultSet rs) throws SQLException {
         Document d = new Document(
                 rs.getInt("id"),
@@ -166,7 +166,7 @@ public class DocumentRepository {
                 rs.getString("sub_type")
         );
 
-
+// KS: Adding UUID to document bcz Contructor creating a new UUID
         d.setUuid(rs.getString("uuid"));
         return d;
     }

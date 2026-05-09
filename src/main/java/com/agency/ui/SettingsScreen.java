@@ -284,10 +284,14 @@ public class SettingsScreen {
         Connection conn = null;
 
         try {
+            File backupDir = new File(System.getProperty("user.home") + "/KP_BACKUP");
+            if (!backupDir.exists()) backupDir.mkdirs();
+
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Select Backup File");
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
 
+            chooser.setInitialDirectory(backupDir);
             File file = chooser.showOpenDialog(null);
             if (file == null) return;
 
@@ -403,7 +407,7 @@ public class SettingsScreen {
             alert("Failed to save profile");
         }
     }
-
+// KS: load settings file
     private static Properties loadProfileData() {
         Properties props = new Properties();
 
