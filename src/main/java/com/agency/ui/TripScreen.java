@@ -226,8 +226,12 @@ public class TripScreen {
 
             int from = currentPage * PAGE_SIZE;
             int to = Math.min(from + PAGE_SIZE, filtered.size());
+            table.getItems().clear();
 
-            table.setItems(FXCollections.observableArrayList(filtered.subList(from, to)));
+            javafx.application.Platform.runLater(() -> {
+                table.setItems(FXCollections.observableArrayList(filtered.subList(from, to)));
+                table.refresh();
+            });
 
             pageInfo.setText("Page " + (currentPage + 1) + " of " + pageCount);
             prev.setDisable(currentPage == 0);

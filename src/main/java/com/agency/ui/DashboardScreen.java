@@ -33,8 +33,7 @@ public class DashboardScreen {
     private static HBox mainRoot;
     private static Label userLabel;
 
-//    private static List<Trip> cachedTrips = new ArrayList<>();
-//    private static List<Client> cachedClients = new ArrayList<>();
+
 
     public static void show(Stage stage) {
         VBox sidebar = new VBox(14);

@@ -192,7 +192,13 @@ public class ClientsScreen {
             int from = currentPage[0] * PAGE_SIZE;
             int to = Math.min(from + PAGE_SIZE, total);
 
-            table.setItems(FXCollections.observableArrayList(filteredClients.subList(from, to)));
+
+            table.getItems().clear();
+
+            javafx.application.Platform.runLater(() -> {
+                table.setItems(FXCollections.observableArrayList(filteredClients.subList(from, to)));
+                table.refresh();
+            });
 
             pageInfo.setText("Page " + (currentPage[0] + 1) + " of " + pageCount);
             prevBtn.setDisable(currentPage[0] == 0);
