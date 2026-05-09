@@ -1,11 +1,13 @@
 package com.agency.ui;
 
 import com.agency.cache.AppCache;
+import com.agency.db.DocumentRepository;
 import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Document;
 import com.agency.model.Trip;
 import com.agency.util.AppLogger;
+import com.agency.util.UiHelper;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -75,6 +77,8 @@ public class TripScreen {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(430);
 
+
+        table.setStyle("-fx-border-color: black; -fx-border-width: 2;");
         TableColumn<Trip, String> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(data -> {
             int rowIndex = data.getTableView().getItems().indexOf(data.getValue()) + 1;
@@ -179,6 +183,7 @@ public class TripScreen {
 
                     confirm.showAndWait().ifPresent(response -> {
                         if (response == ButtonType.OK) {
+                            DocumentRepository.deleteDocumentsByTripUuid(trip.getUuid());
                             TripRepository.deleteTrip(trip.getUuid());
                             AppCache.reloadTrips();
                             AppCache.reloadDocuments();
@@ -370,7 +375,7 @@ public class TripScreen {
         card.getChildren().addAll(section1, clientInfo, section2, tripInfo,
                 section3, paymentInfo, section4, docsBox);
 
-        backBtn.setOnAction(e -> showTripList(root));
+        backBtn.setOnAction(e -> UiHelper.showLoadingThen(root, ()->showTripList(root)));
 
         root.getChildren().addAll(header, card);
     }
@@ -649,7 +654,7 @@ public class TripScreen {
             showTripList(root);
         });
 
-        backBtn.setOnAction(e -> showTripList(root));
+        backBtn.setOnAction(e -> UiHelper.showLoadingThen(root, ()-> showTripList(root)));
 
         VBox formContainer = new VBox(20, header, form, save);
         formContainer.setFillWidth(true);
@@ -709,4 +714,6 @@ public class TripScreen {
         btn.getStyleClass().add(styleClass);
         return btn;
     }
+
+
 }

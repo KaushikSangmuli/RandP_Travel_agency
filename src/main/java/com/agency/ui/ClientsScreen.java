@@ -8,6 +8,7 @@ import com.agency.model.Client;
 import com.agency.model.Document;
 import com.agency.model.Trip;
 import com.agency.util.AppLogger;
+import com.agency.util.UiHelper;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -273,7 +274,7 @@ public class ClientsScreen {
         List<Trip> trips = AppCache.getTrips();
 
         for (Trip trip : trips) {
-            if (trip.getClientId() == client.getId()) {
+            if (client.getUuid().equals(trip.getClientUuid())) {
                 tripCount++;
                 totalPurchase += trip.getPurchaseValue();
                 totalSell += trip.getSellValue();
@@ -352,9 +353,11 @@ public class ClientsScreen {
                 docsTitle, docsBox
         );
 
-        backBtn.setOnAction(e -> showClientList(root));
+        backBtn.setOnAction(e-> UiHelper.showLoadingThen(root, ()->showClientList(root)));
 
         root.getChildren().addAll(header, card);
+
+
     }
 
     private static void showClientForm(VBox root, Client editClient) {
@@ -431,7 +434,8 @@ public class ClientsScreen {
             showClientList(root);
         });
 
-        backBtn.setOnAction(e -> showClientList(root));
+        backBtn.setOnAction(e -> UiHelper.showLoadingThen(root, ()->showClientList(root) ));
+
 
         root.getChildren().addAll(header, form, save);
     }
@@ -472,5 +476,18 @@ public class ClientsScreen {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setContentText(msg);
         alert.show();
+    }
+
+    private static void showLoadingThen(VBox root, Runnable action) {
+        ProgressIndicator loader = new ProgressIndicator();
+        loader.setPrefSize(35, 35);
+
+        VBox loadingBox = new VBox(12, loader, new Label("Loading..."));
+        loadingBox.setAlignment(Pos.CENTER);
+        loadingBox.setPrefHeight(400);
+
+        root.getChildren().setAll(loadingBox);
+
+        javafx.application.Platform.runLater(action);
     }
 }

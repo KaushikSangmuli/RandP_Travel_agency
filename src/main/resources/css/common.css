@@ -95,3 +95,8 @@
     -fx-font-size: 12px;
     -fx-font-weight: 500;
 }
+
+.custom-table{
+    -fx-border-color: black;
+    -fx-border-width: 2;
+}

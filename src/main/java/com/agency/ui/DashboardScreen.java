@@ -6,6 +6,7 @@ import com.agency.db.TripRepository;
 import com.agency.model.Client;
 import com.agency.model.Trip;
 import com.agency.util.AppLogger;
+import com.agency.util.UiHelper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -69,40 +70,13 @@ public class DashboardScreen {
         setActive(dashboardBtn);
         loadDashboardContent();
 
-        dashboardBtn.setOnAction(e -> {
-            setActive(dashboardBtn);
-            loadDashboardContent();
-        });
-
-        clientsBtn.setOnAction(e -> {
-            setActive(clientsBtn);
-            loadClientsScreen();
-        });
-
-        tripsBtn.setOnAction(e -> {
-            setActive(tripsBtn);
-            loadTripsScreen();
-        });
-
-        calendarBtn.setOnAction(e -> {
-            setActive(calendarBtn);
-            content.getChildren().setAll(CalendarScreen.getView());
-        });
-
-        documentsBtn.setOnAction(e -> {
-            setActive(documentsBtn);
-            content.getChildren().setAll(DocumentScreen.getView());
-        });
-
-        reportsBtn.setOnAction(e -> {
-            setActive(reportsBtn);
-            content.getChildren().setAll(ReportsScreen.getView());
-        });
-
-        settingsBtn.setOnAction(e -> {
-            setActive(settingsBtn);
-            content.getChildren().setAll(SettingsScreen.getView());
-        });
+        dashboardBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(dashboardBtn);loadDashboardContent();}));
+        clientsBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(clientsBtn);loadClientsScreen();}));
+        tripsBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(tripsBtn);loadTripsScreen();}));
+        calendarBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(calendarBtn);content.getChildren().setAll(CalendarScreen.getView());}));
+        documentsBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(documentsBtn);content.getChildren().setAll(DocumentScreen.getView());}));
+        reportsBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(reportsBtn);content.getChildren().setAll(ReportsScreen.getView());}));
+        settingsBtn.setOnAction(e -> UiHelper.showLoadingThen(content, () -> {setActive(settingsBtn);content.getChildren().setAll(SettingsScreen.getView());}));
 
         BorderPane rightSide = new BorderPane();
         rightSide.setTop(createTopbar());
@@ -165,25 +139,35 @@ public class DashboardScreen {
                 LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM yyyy"))
         );
 
-        c1.setOnMouseClicked(e -> {
-            setActive(clientsBtn);
-            loadClientsScreen();
-        });
+        c1.setOnMouseClicked(e ->
+                UiHelper.showLoadingThen(content, () -> {
+                    setActive(clientsBtn);
+                    loadClientsScreen();
+                })
+        );
 
-        c2.setOnMouseClicked(e -> {
-            setActive(tripsBtn);
-            loadTripsScreen();
-        });
 
-        c3.setOnMouseClicked(e -> {
-            setActive(tripsBtn);
-            loadTripsScreen();
-        });
+        c2.setOnMouseClicked(e->
+                UiHelper.showLoadingThen(content, () -> {
+                    setActive(tripsBtn);
+                    loadTripsScreen();
+                })
+        );
 
-        c4.setOnMouseClicked(e -> {
-            setActive(calendarBtn);
-            content.getChildren().setAll(CalendarScreen.getView());
-        });
+
+
+        c3.setOnMouseClicked(e ->
+                UiHelper.showLoadingThen(content, () ->  {
+                    setActive(tripsBtn);
+                    loadTripsScreen();
+                }));
+
+        c4.setOnMouseClicked(e -> UiHelper.showLoadingThen(
+                content, () -> {
+                    setActive(calendarBtn);
+                    content.getChildren().setAll(CalendarScreen.getView());
+                }
+        ));
 
         cards.getChildren().addAll(c1, c2, c3, c4);
 

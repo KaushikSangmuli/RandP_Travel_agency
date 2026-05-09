@@ -166,7 +166,22 @@ public class DocumentRepository {
                 rs.getString("sub_type")
         );
 
+
         d.setUuid(rs.getString("uuid"));
         return d;
+    }
+
+    public static void deleteDocumentsByTripUuid(String tripUuid) {
+        String sql = "DELETE FROM documents WHERE trip_uuid=?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, tripUuid);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            AppLogger.logError(e, "Failed at deleteDocumentsByTripUuid");
+        }
     }
 }

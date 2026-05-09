@@ -358,7 +358,7 @@ public class SettingsScreen {
             try {
                 if (conn != null) conn.rollback();
             } catch (Exception ex) {
-                ex.printStackTrace();
+                AppLogger.logError(e, "Failed while doing rollback in the restore method");
             }
 
             AppLogger.logError(e, "Failed at Restore Backup Files From BackupDB");
