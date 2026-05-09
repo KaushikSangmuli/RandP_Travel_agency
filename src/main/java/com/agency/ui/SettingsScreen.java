@@ -162,7 +162,7 @@ public class SettingsScreen {
         VBox info = card("App Info", loadIcon("information.png", 16));
         info.getChildren().addAll(
                 new Label("Version: 1.0.0"),
-                new Label("Company: KP Tours & Travels"),
+                new Label("Company: AK Service & Solutions"),
                 new Label("Clients: " + AppCache.getClients().size()),
                 new Label("Trips: " + AppCache.getTrips().size())
         );
