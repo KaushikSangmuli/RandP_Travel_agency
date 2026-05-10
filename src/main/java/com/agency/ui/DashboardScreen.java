@@ -311,7 +311,15 @@ public class DashboardScreen {
         Label l4 = dashCell(type);
         Label l6 = dashCell(contact);
 
-        HBox statusBox = header ? centerBox(dashCell(status)) : centerBox(statusPill(status));
+        Label statusLabel = dashCell(status);
+
+        if (header) {
+            statusLabel.getStyleClass().add("trip-header-text");
+        }
+
+        HBox statusBox = header
+                ? centerBox(statusLabel)
+                : centerBox(statusPill(status));
 
         if (header) {
             Label l7 = dashCell(details);
@@ -574,7 +582,7 @@ public class DashboardScreen {
 
             for (Client c : matchedClients) {
                 HBox row = new HBox(14);
-                row.setAlignment(Pos.CENTER_LEFT);
+                row.setAlignment(Pos.CENTER);
                 row.getStyleClass().add("card");
 
                 Label info = new Label(
