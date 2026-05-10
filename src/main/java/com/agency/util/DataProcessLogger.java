@@ -25,11 +25,11 @@ public class DataProcessLogger {
             );
 
             out.println("======================================");
-            out.println("🕒 TIME        : " + now());
-            out.println("📦 OPERATION   : BACKUP");
-            out.println("👥 CLIENTS     : " + clientCount);
-            out.println("✈ TRIPS       : " + tripCount);
-            out.println("📁 FILE        : " + filePath);
+            out.println(" TIME        : " + now());
+            out.println(" OPERATION   : BACKUP");
+            out.println(" CLIENTS     : " + clientCount);
+            out.println(" TRIPS       : " + tripCount);
+            out.println(" FILE        : " + filePath);
             out.println("======================================\n");
 
             out.close();
@@ -49,12 +49,12 @@ public class DataProcessLogger {
             );
 
             out.println("======================================");
-            out.println("🕒 TIME        : " + now());
-            out.println("🔄 OPERATION   : RESTORE");
-            out.println("👥 CLIENTS     : " + clientCount);
-            out.println("✈ TRIPS       : " + tripCount);
-            out.println("📁 FILE        : " + filePath);
-            out.println("✅ STATUS      : " + (success ? "SUCCESS" : "FAILED"));
+            out.println("TIME        : " + now());
+            out.println("OPERATION   : RESTORE");
+            out.println("CLIENTS     : " + clientCount);
+            out.println("TRIPS       : " + tripCount);
+            out.println("FILE        : " + filePath);
+            out.println("STATUS      : " + (success ? "SUCCESS" : "FAILED"));
             out.println("======================================\n");
 
             out.close();

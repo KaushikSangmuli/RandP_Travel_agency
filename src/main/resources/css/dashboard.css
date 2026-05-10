@@ -489,3 +489,25 @@
 .calendar-dot {
     -fx-fill: #F97316;
 }
+
+.back-btn {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #1e293b;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+    -fx-border-color: #dbe3ea;
+    -fx-border-radius: 10;
+}
+
+.back-btn:hover {
+    -fx-background-color: #f1f5f9;
+}
+
+.back-btn:pressed {
+    -fx-background-color: #cbd5e1;
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+}

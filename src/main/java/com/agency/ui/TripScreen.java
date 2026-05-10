@@ -78,7 +78,6 @@ public class TripScreen {
         table.setPrefHeight(430);
 
 
-        table.setStyle("-fx-border-color: black; -fx-border-width: 2;");
         TableColumn<Trip, String> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(data -> {
             int rowIndex = data.getTableView().getItems().indexOf(data.getValue()) + 1;

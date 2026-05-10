@@ -37,23 +37,23 @@ public class AppLogger {
           out.println("-----------------------------------------------");
 
             // 🔥 BASIC INFO
-            out.println("📦 CLASS     : " + originClass);
-            out.println("⚙ METHOD    : " + originMethod);
-            out.println("📄 LINE      : " + line);
+            out.println(" CLASS     : " + originClass);
+            out.println(" METHOD    : " + originMethod);
+            out.println(" LINE      : " + line);
 
 
-            out.println("🕒 TIME      : " + time);
-            out.println("📍 CONTEXT   : " + context);
-            out.println("⚠ MESSAGE    : " + e.getMessage());
-            out.println("🔎 TYPE      : " + e.getClass().getSimpleName());
+            out.println(" TIME      : " + time);
+            out.println(" CONTEXT   : " + context);
+            out.println(" MESSAGE    : " + e.getMessage());
+            out.println(" TYPE      : " + e.getClass().getSimpleName());
 
 
 
             // 🔥 ROOT CAUSE (VERY IMPORTANT)
             Throwable root = getRootCause(e);
-            out.println("💥 ROOT CAUSE: " + root.getMessage());
+            out.println(" ROOT CAUSE: " + root.getMessage());
 
-            out.println("\n💥 CAUSE CHAIN:");
+            out.println("\n CAUSE CHAIN:");
             Throwable t = e;
             int level = 1;
 

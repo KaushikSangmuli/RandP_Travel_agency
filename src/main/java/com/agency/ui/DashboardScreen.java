@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -368,15 +369,24 @@ public class DashboardScreen {
     }
 
     private static Label dashCell(String text) {
-        String value = text == null || text.isEmpty() ? "-" : text;
 
-        Label label = new Label(value);
-        label.setMaxWidth(Double.MAX_VALUE);
-        label.setAlignment(Pos.CENTER);
+        Label label = new Label(text);
+
         label.setWrapText(false);
+
+        label.setAlignment(Pos.CENTER);
+
+        label.setTextAlignment(TextAlignment.CENTER);
+
+        label.setMaxWidth(Double.MAX_VALUE);
+
         label.setEllipsisString("...");
 
-        Tooltip.install(label, new Tooltip(value));
+        label.setStyle("""
+        -fx-alignment: center;
+        -fx-text-alignment: center;
+    """);
+
         return label;
     }
 
