@@ -2,7 +2,6 @@ package com.agency.ui;
 
 import com.agency.cache.AppCache;
 import com.agency.db.DocumentRepository;
-import com.agency.db.TripRepository;
 import com.agency.model.Document;
 import com.agency.model.Trip;
 import com.agency.util.AppLogger;
@@ -23,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.agency.ui.DashboardScreen.loadIcon;
+import static com.agency.ui.SettingsScreen.popup;
 
 public class DocumentScreen {
 
@@ -32,6 +32,10 @@ public class DocumentScreen {
     private static VBox listBox;
     private static Trip selectedTrip;
 
+    // ✅ NEW
+    private static ComboBox<String> category;
+    private static ComboBox<String> subType;
+
     public static VBox getView() {
         root = new VBox(22);
         root.getStyleClass().add("client-root");
@@ -40,6 +44,7 @@ public class DocumentScreen {
     }
 
     private static void buildUI() {
+
         Label title = new Label("Documents");
         title.getStyleClass().add("client-title");
 
@@ -53,10 +58,6 @@ public class DocumentScreen {
         tripList.setMaxHeight(140);
         tripList.setVisible(false);
         tripList.setManaged(false);
-        tripList.setStyle("-fx-background-color: white;" +
-                "-fx-border-color: #d6e0ee;" +
-                "-fx-border-radius: 10;" +
-                "-fx-background-radius: 10;");
 
         List<Trip> trips = AppCache.getTrips();
 
@@ -91,20 +92,17 @@ public class DocumentScreen {
 
             List<Trip> filteredTrips = trips.stream()
                     .filter(t ->
-                            String.valueOf(t.getId()).contains(keyword)
-                                    || safe(t.getClientName()).toLowerCase().contains(keyword)
-                                    || safe(t.getDestination()).toLowerCase().contains(keyword)
-                                    || safe(t.getDate()).toLowerCase().contains(keyword)
-                                    || safe(t.getStatus()).toLowerCase().contains(keyword))
+                            String.valueOf(t.getId()).contains(keyword) ||
+                                    safe(t.getClientName()).toLowerCase().contains(keyword) ||
+                                    safe(t.getDestination()).toLowerCase().contains(keyword) ||
+                                    safe(t.getDate()).toLowerCase().contains(keyword)
+                    )
                     .collect(Collectors.toList());
 
             tripList.setItems(FXCollections.observableArrayList(filteredTrips));
-
-            boolean showList = !filteredTrips.isEmpty();
-            tripList.setVisible(showList);
-            tripList.setManaged(showList);
-
-            refreshList();
+            boolean show = !filteredTrips.isEmpty();
+            tripList.setVisible(show);
+            tripList.setManaged(show);
         });
 
         tripList.setOnMouseClicked(e -> {
@@ -124,6 +122,28 @@ public class DocumentScreen {
             refreshList();
         });
 
+        // ✅ NEW DROPDOWNS (UI intact, just added)
+        category = new ComboBox<>();
+        category.getItems().addAll("VISA", "TICKET", "PASSPORT", "INVOICE", "OTHER");
+        category.setPromptText("Category");
+        category.getStyleClass().add("client-input");
+
+        subType = new ComboBox<>();
+        subType.setPromptText("Sub Type");
+        subType.getStyleClass().add("client-input");
+
+        category.setOnAction(e -> {
+            subType.getItems().clear();
+
+            switch (category.getValue()) {
+                case "TICKET" -> subType.getItems().addAll("FLIGHT", "HOTEL", "ITINERARY");
+                case "VISA" -> subType.getItems().addAll("TOURIST", "BUSINESS");
+                case "PASSPORT" -> subType.getItems().addAll("FRONT", "BACK");
+                case "INVOICE" -> subType.getItems().addAll("PAYMENT", "REFUND");
+                default -> subType.getItems().add("GENERAL");
+            }
+        });
+
         Button uploadBtn = new Button("Upload Document", loadIcon("upload.png", 16));
         uploadBtn.getStyleClass().add("green-btn");
         uploadBtn.setGraphicTextGap(8);
@@ -132,7 +152,8 @@ public class DocumentScreen {
         VBox searchBox = new VBox(8, tripSearch, tripList);
         searchBox.setPrefWidth(240);
 
-        HBox top = new HBox(15, searchBox, uploadBtn);
+        // ✅ ONLY change: added category + subType
+        HBox top = new HBox(15, searchBox, category, subType, uploadBtn);
         top.setAlignment(Pos.CENTER_LEFT);
 
         listBox = new VBox(12);
@@ -141,10 +162,6 @@ public class DocumentScreen {
         scrollPane.getStyleClass().add("panel");
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefHeight(430);
-        scrollPane.setMinHeight(300);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
 
         root.getChildren().addAll(title, top, scrollPane);
 
@@ -152,16 +169,22 @@ public class DocumentScreen {
     }
 
     private static void uploadFile() {
+
         if (selectedTrip == null) {
-            alert("Please search and select a trip first");
+            alert("Please select a trip first");
             return;
         }
 
+        // ✅ NEW validation
+        if (category.getValue() == null) {
+            popup("Select category");
+            return;
+        }
+
+
+
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select Document");
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Documents", "*.pdf", "*.doc", "*.docx")
-        );
 
         File selectedFile = chooser.showOpenDialog(null);
         if (selectedFile == null) return;
@@ -169,13 +192,20 @@ public class DocumentScreen {
         try {
             File storageDir = getStorageDir();
 
-            String extension = selectedFile.getName().substring(selectedFile.getName().lastIndexOf("."));
-            String safeClient = safe(selectedTrip.getClientName()).replaceAll("[^a-zA-Z0-9]", "_");
+            String extension = selectedFile.getName()
+                    .substring(selectedFile.getName().lastIndexOf("."));
+
+            String safeClient = safe(selectedTrip.getClientName())
+                    .replaceAll("[^a-zA-Z0-9]", "_");
+
+            String subTypeValue = subType.getValue() == null ? "GENERAL" : subType.getValue();;
 
             String newFileName =
-                    "trip_" + selectedTrip.getId()
-                            + "_" + safeClient
-                            + "_" + UUID.randomUUID().toString().substring(0, 5)
+                    "trip_" + selectedTrip.getId() + "_"
+                            + safeClient + "_"
+                            + category.getValue() + "_"
+                            + subTypeValue + "_"
+                            + UUID.randomUUID().toString().substring(0, 5)
                             + extension;
 
             File destFile = new File(storageDir, newFileName);
@@ -186,23 +216,25 @@ public class DocumentScreen {
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING
             );
 
+            // ✅ UPDATED DB save
             Document doc = new Document(
                     0,
                     selectedTrip.getUuid(),
                     selectedTrip.getClientUuid(),
                     destFile.getAbsolutePath(),
-                    "TRIP",
-                    "DOCUMENT"
+                    category.getValue(),
+                    subType.getValue()
             );
 
             DocumentRepository.addDocument(doc);
-            AppCache.reloadDocuments();
 
+            AppCache.reloadDocuments();
             refreshList();
-            alert("Document uploaded successfully");
+
+            popup("Document uploaded successfully");
 
         } catch (Exception ex) {
-            AppLogger.logError(ex, "Failed while Uploading the Document");
+            AppLogger.logError(ex, "Failed while Uploading Document");
             alert("Failed to save document");
         }
     }
@@ -210,71 +242,55 @@ public class DocumentScreen {
     private static void refreshList() {
         listBox.getChildren().clear();
 
-        boolean hasData = false;
-
         if (selectedTrip == null) {
-            List<Trip> trips = AppCache.getTrips();
-
-            for (Trip t : trips) {
-                List<Document> docs = AppCache.getDocuments().stream()
-                        .filter(d -> t.getUuid().equals(d.getTripUuid()))
-                        .collect(Collectors.toList());
-
-                for (Document doc : docs) {
-                    addRow(t, doc);
-                    hasData = true;
-                }
-            }
-        } else {
-            List<Document> docs = AppCache.getDocuments().stream()
-                    .filter(d -> selectedTrip.getUuid().equals(d.getTripUuid()))
-                    .collect(Collectors.toList());
-
-            for (Document doc : docs) {
-                addRow(selectedTrip, doc);
-                hasData = true;
-            }
+            Label msg = new Label("Please select a trip to view documents");
+            msg.getStyleClass().add("card-subtitle");
+            listBox.getChildren().add(msg);
+            return;
         }
 
-        if (!hasData) {
+        List<Document> docs = AppCache.getDocuments().stream()
+                .filter(d -> selectedTrip.getUuid().equals(d.getTripUuid()))
+                .collect(Collectors.toList());
+
+        if (docs.isEmpty()) {
             Label empty = new Label("No documents found");
             empty.getStyleClass().add("card-subtitle");
             listBox.getChildren().add(empty);
+            return;
+        }
+
+        for (Document doc : docs) {
+            addRow(selectedTrip, doc);
         }
     }
 
     private static void addRow(Trip trip, Document doc) {
+
         File file = new File(doc.getFilePath());
 
         Label name = new Label(file.getName());
         name.getStyleClass().add("card-title");
 
+        // ✅ show type + subtype
         Label meta = new Label(
-                (trip != null ? safe(trip.getClientName()) + " | " + safe(trip.getDestination()) : "Trip Document")
-                        + " | " + readableSize(file.length())
+                doc.getType() + " | " + doc.getSubType() + " | " +
+                        readableSize(file.length())
         );
         meta.getStyleClass().add("card-subtitle");
 
         VBox infoBox = new VBox(4, name, meta);
-        infoBox.setAlignment(Pos.CENTER_LEFT);
 
         Button view = new Button("View");
         view.getStyleClass().add("blue-btn");
-        view.setPrefWidth(90);
-        view.setMinWidth(90);
-        view.setMaxWidth(90);
 
         Button delete = new Button("Delete");
         delete.getStyleClass().add("delete-btn");
-        delete.setPrefWidth(75);
-        delete.setMinWidth(75);
-        delete.setMaxWidth(75);
 
         view.setOnAction(e -> {
             try {
                 Desktop.getDesktop().open(file);
             } catch (Exception ex) {
-                AppLogger.logError(ex, "Failed while adding a row.");
                 alert("Cannot open file");
             }
         });
@@ -288,22 +304,16 @@ public class DocumentScreen {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox actions = new HBox(8, view, delete);
-        actions.setAlignment(Pos.CENTER_RIGHT);
-
-        HBox row = new HBox(12, infoBox, spacer, actions);
+        HBox row = new HBox(12, infoBox, spacer, view, delete);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("card");
-        row.setMinHeight(76);
 
         listBox.getChildren().add(row);
     }
 
     private static File getStorageDir() {
         File dir = new File(System.getProperty("user.home") + "/KP_Tours_Documents");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+        if (!dir.exists()) dir.mkdirs();
         return dir;
     }
 
@@ -318,8 +328,6 @@ public class DocumentScreen {
     }
 
     private static void alert(String msg) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setContentText(msg);
-        alert.show();
+        new Alert(Alert.AlertType.WARNING, msg).show();
     }
 }

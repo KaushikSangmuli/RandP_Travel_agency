@@ -525,7 +525,7 @@ public class SettingsScreen {
         alert.showAndWait();
     }
 
-    private static void popup(String msg) {
+    public static void popup(String msg) {
         Popup popup = new Popup();
 
         Label text = new Label(msg);

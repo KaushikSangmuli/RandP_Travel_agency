@@ -344,8 +344,15 @@ public class DashboardScreen {
         for (javafx.scene.Node node : row.getChildren()) {
             HBox.setHgrow(node, Priority.ALWAYS);
 
-            if (node instanceof Region) {
-                ((Region) node).setMaxWidth(Double.MAX_VALUE);
+            if (node instanceof Region region) {
+                region.setMinWidth(0);
+                region.setPrefWidth(120);
+                region.setMaxWidth(Double.MAX_VALUE);
+            }
+
+            if (node instanceof Label label) {
+                label.setAlignment(Pos.CENTER);
+                label.setMaxWidth(Double.MAX_VALUE);
             }
         }
 
