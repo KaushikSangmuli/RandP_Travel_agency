@@ -14,11 +14,15 @@ import com.agency.model.Document;
 import com.agency.model.Trip;
 import com.agency.util.AppLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.animation.PauseTransition;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
+import javafx.stage.Window;
+import javafx.util.Duration;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -356,7 +360,7 @@ public class SettingsScreen {
             conn.commit();
             AppCache.loadAll();
 
-            alert("Restore completed successfully");
+            popup("Restore completed successfully");
 
         } catch (Exception e) {
             try {
@@ -521,6 +525,39 @@ public class SettingsScreen {
         alert.showAndWait();
     }
 
+    private static void popup(String msg) {
+        Popup popup = new Popup();
+
+        Label text = new Label(msg);
+        text.setStyle(
+                "-fx-background-color: #333;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-padding: 10 15;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-font-size: 13px;"
+        );
+
+        popup.getContent().add(text);
+        popup.setAutoHide(true);
+
+        // get current window
+        Window window = javafx.stage.Window.getWindows().stream()
+                .filter(Window::isShowing)
+                .findFirst()
+                .orElse(null);
+
+        if (window != null) {
+            popup.show(window);
+
+            // position bottom center
+            popup.setX(window.getX() + (window.getWidth() / 2) - 100);
+            popup.setY(window.getY() + window.getHeight() - 100);
+        }
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(2));
+        delay.setOnFinished(e -> popup.hide());
+        delay.play();
+    }
     public static String getLoginUsername() {
         Properties props = loadProfileData();
         return props.getProperty("login.username", "admin");

@@ -7,7 +7,7 @@
 
 .table-view {-fx-background-color:white;-fx-border-color:transparent;}
 .table-view .column-header-background {-fx-background-color:#F8FAFC;}
-.table-view .column-header {-fx-background-color:#F8FAFC;-fx-padding:14 10;-fx-border-color:transparent transparent #E5E7EB transparent;}
+.table-view .column-header {-fx-background-color:#F8FAFC;-fx-padding:14 10;-fx-border-color:transparent #858282 #E5E7EB #8e8a8a;}
 .table-view .column-header .label {-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#334155;}
 
 .table-row-cell {-fx-background-color:white;-fx-cell-size:58;-fx-border-color:transparent;}

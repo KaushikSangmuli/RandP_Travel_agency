@@ -81,18 +81,23 @@ public class ClientsScreen {
 
         TableColumn<Client, Number> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(c -> new SimpleIntegerProperty(filteredClients.indexOf(c.getValue()) + 1));
-
+        idCol.setStyle("-fx-alignment: CENTER;");
         TableColumn<Client, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<Client, String> phoneCol = new TableColumn<>("Phone");
         phoneCol.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        phoneCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<Client, String> emailCol = new TableColumn<>("Email");
         emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
+        emailCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<Client, String> cityCol = new TableColumn<>("City");
         cityCol.setCellValueFactory(new PropertyValueFactory<>("city"));
+        cityCol.setStyle("-fx-alignment: CENTER;");
+
 
         TableColumn<Client, Void> detailsCol = new TableColumn<>("Details");
 

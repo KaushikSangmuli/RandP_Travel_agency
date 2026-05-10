@@ -18,8 +18,9 @@ public class MainApp extends Application {
         );
 
         DBInit.initialize();
-        com.agency.ui.SettingsScreen.runDailyBackupIfNeeded();
         AppCache.loadAll();
+
+        com.agency.ui.SettingsScreen.runDailyBackupIfNeeded();
         // 1. If valid license exists, continue app
         if (LicenseManager.isApplicationAllowed()) {
             openApp(stage);
