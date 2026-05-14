@@ -105,7 +105,7 @@ public class MaintenanceScreen {
     }
 
     private static void handleUnlock(PasswordField keyField, Label message, Stage stage) {
-        if ("ADMIN123".equals(keyField.getText())) {
+        if ("7000705523".equals(keyField.getText())) {
             message.setText("Access Granted");
             LoginScreen.show(stage);
         } else {
